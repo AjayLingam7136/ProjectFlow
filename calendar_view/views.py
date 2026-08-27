@@ -50,9 +50,16 @@ class CalendarView(LoginRequiredMixin, TemplateView):
         user = self.request.user
         from tasks.models import Task
         from projects.models import Project
+        from issues.models import Issue
 
         tasks = Task.objects.filter(
             Q(project__owner=user) | Q(project__team_members=user) | Q(project__memberships__user=user),
+            due_date__gte=first_day,
+            due_date__lte=last_day,
+        ).select_related('project', 'assignee').distinct()
+
+        issues = Issue.objects.filter(
+            Q(project__owner=user) | Q(project__team_members=user) | Q(project__memberships__user=user) | Q(assignee=user),
             due_date__gte=first_day,
             due_date__lte=last_day,
         ).select_related('project', 'assignee').distinct()
@@ -77,6 +84,21 @@ class CalendarView(LoginRequiredMixin, TemplateView):
                 'priority': task.priority,
                 'url': f'/tasks/{task.pk}/',
                 'is_overdue': task.is_overdue,
+            })
+
+        for issue in issues:
+            day = issue.due_date.day
+            if day not in events:
+                events[day] = []
+            events[day].append({
+                'type': 'issue',
+                'id': issue.pk,
+                'title': issue.title,
+                'status': issue.status,
+                'priority': issue.priority,
+                'severity': issue.severity,
+                'url': f'/issues/{issue.pk}/',
+                'is_overdue': issue.is_overdue,
             })
 
         for project in projects:
@@ -114,9 +136,16 @@ class CalendarAPIView(LoginRequiredMixin, View):
         user = request.user
         from tasks.models import Task
         from projects.models import Project
+        from issues.models import Issue
 
         tasks = Task.objects.filter(
             Q(project__owner=user) | Q(project__team_members=user) | Q(project__memberships__user=user),
+            due_date__gte=start,
+            due_date__lte=end,
+        ).select_related('project', 'assignee').distinct()
+
+        issues = Issue.objects.filter(
+            Q(project__owner=user) | Q(project__team_members=user) | Q(project__memberships__user=user) | Q(assignee=user),
             due_date__gte=start,
             due_date__lte=end,
         ).select_related('project', 'assignee').distinct()
@@ -138,6 +167,19 @@ class CalendarAPIView(LoginRequiredMixin, View):
                 'priority': task.priority,
                 'url': f'/tasks/{task.pk}/',
                 'is_overdue': task.is_overdue,
+            })
+
+        for issue in issues:
+            events.append({
+                'id': f'issue-{issue.pk}',
+                'type': 'issue',
+                'title': issue.title,
+                'date': issue.due_date.isoformat(),
+                'status': issue.status,
+                'priority': issue.priority,
+                'severity': issue.severity,
+                'url': f'/issues/{issue.pk}/',
+                'is_overdue': issue.is_overdue,
             })
 
         for project in projects:

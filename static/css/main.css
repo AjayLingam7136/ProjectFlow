@@ -2065,6 +2065,12 @@ ul.errorlist li {
   border-left-color: var(--color-secondary);
 }
 
+.calendar-event.issue {
+  background-color: var(--color-warning-light);
+  color: var(--color-warning);
+  border-left-color: var(--color-warning);
+}
+
 .calendar-event.overdue {
   background-color: var(--color-error-light);
   color: var(--color-error);
