@@ -95,17 +95,6 @@ python manage.py runserver
 
 Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) to access the app.
 
-## Issue Statuses
-
-| Status     | Description                      |
-|------------|----------------------------------|
-| Open       | Newly created, unassigned        |
-| Assigned   | Assigned to a team member        |
-| In Progress| Actively being worked on         |
-| Fixed      | Fix applied, pending verification|
-| Closed     | Resolved and verified            |
-| Reopen     | Reopened for further work        |
-
 ## License
 
 This project is for internal use.
