@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Profile — ProjectFlow{% endblock %}
+{% block topbar_title %}Profile{% endblock %}
+{% block content %}
+<div class="profile-page">
+    <div class="profile-card">
+        <div class="profile-header">
+            {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" alt="{{ user.username }}" class="profile-avatar">
+            {% else %}
+                <div class="profile-avatar">{{ user.get_initials }}</div>
+            {% endif %}
+            <div class="profile-info">
+                <h2 class="profile-name">{{ user.get_full_name|default:user.username }}</h2>
+                <p class="profile-email">{{ user.email }}</p>
+                {% if user.bio %}<p class="profile-bio">{{ user.bio }}</p>{% endif %}
+                <div class="profile-actions">
+                    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline btn-sm">Edit Profile</a>
+                    <a href="{% url 'accounts:password_change' %}" class="btn btn-outline btn-sm">Change Password</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

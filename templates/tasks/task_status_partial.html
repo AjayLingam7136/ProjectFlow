@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Update Status — ProjectFlow{% endblock %}
+{% block content %}
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-card-header">
+            <h2 class="form-card-title">Update Task Status</h2>
+        </div>
+        <form method="post" action="{% url 'tasks:status' task.pk %}" class="form">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.status.label_tag }}
+                {{ form.status }}
+                {% if form.status.errors %}<span class="form-error">{{ form.status.errors }}</span>{% endif %}
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                <a href="{% url 'tasks:detail' task.pk %}" class="btn btn-outline btn-sm">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

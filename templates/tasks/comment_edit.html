@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Edit Comment — ProjectFlow{% endblock %}
+{% block topbar_title %}Edit Comment{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'tasks:detail' comment.task.pk %}" class="btn btn-outline btn-sm">Back to Task</a>
+{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-card-header">
+            <h2 class="form-card-title">Edit Comment</h2>
+            <p class="form-card-subtitle">On task: {{ comment.task.title }}</p>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label" for="id_body">Comment</label>
+                {{ form.body }}
+                {% if form.body.errors %}<span class="form-error">{{ form.body.errors }}</span>{% endif %}
+            </div>
+            <div class="form-actions">
+                <a href="{% url 'tasks:detail' comment.task.pk %}" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

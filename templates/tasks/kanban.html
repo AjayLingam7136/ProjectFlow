@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Kanban Board — ProjectFlow{% endblock %}
+{% block topbar_title %}Kanban Board{% endblock %}
+
+{% block topbar_actions %}
+<div class="kanban-filters">
+    <select class="form-select form-select-sm" id="kanban-project-filter" onchange="filterByProject(this.value)">
+        <option value="">All Projects</option>
+        {% for project in projects %}
+        <option value="{{ project.pk }}" {% if selected_project == project.pk %}selected{% endif %}>{{ project.name }}</option>
+        {% endfor %}
+    </select>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="kanban-board" id="kanban-board">
+    {% for status, label, tasks in columns %}
+    <div class="kanban-column" data-status="{{ status }}">
+        <div class="kanban-column-header">
+            <div class="kanban-column-title">
+                <span class="kanban-column-dot" style="background-color: var(--color-{% if status == 'todo' %}todo{% elif status == 'in_progress' %}task-in-progress{% elif status == 'in_review' %}in-review{% elif status == 'completed' %}task-completed{% endif %});"></span>
+                {{ label }}
+                <span class="kanban-column-count">{{ tasks.count }}</span>
+            </div>
+        </div>
+        <div class="kanban-column-body" data-status="{{ status }}">
+            {% for task in tasks %}
+            <div class="kanban-card" draggable="true" data-task-id="{{ task.pk }}" data-status="{{ task.status }}">
+                <div class="kanban-card-header">
+                    <a href="{% url 'tasks:detail' task.pk %}" class="kanban-card-title">{{ task.title }}</a>
+                </div>
+                <div class="kanban-card-meta">
+                    <span class="badge badge-priority-{{ task.priority }} badge-sm">{{ task.get_priority_display }}</span>
+                    {% if task.due_date %}
+                    <span class="kanban-card-due {% if task.is_overdue %}overdue{% endif %}">
+                        <span class="material-icons icon-sm">schedule</span>
+                        {{ task.due_date|date:"M d" }}
+                    </span>
+                    {% endif %}
+                </div>
+                {% if task.tags.all %}
+                <div class="task-tags">
+                    {% for tag in task.tags.all|slice:":3" %}
+                    <span class="tag tag-sm" style="background-color: {{ tag.color|default:'#4a5c73' }}20; color: {{ tag.color|default:'#7b8da4' }};">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="kanban-card-footer">
+                    <div class="kanban-card-project">{{ task.project.name }}</div>
+                    {% if task.assignee %}
+                    <div class="kanban-card-assignee">
+                        <div class="team-avatar-placeholder" style="width:24px;height:24px;font-size:0.5rem;">{{ task.assignee.get_initials }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/kanban.js' %}"></script>
+<script>
+    function filterByProject(projectId) {
+        var url = new URL(window.location);
+        if (projectId) {
+            url.searchParams.set('project', projectId);
+        } else {
+            url.searchParams.delete('project');
+        }
+        window.location = url;
+    }
+</script>
+{% endblock %}

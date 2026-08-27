@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Server Error — ProjectFlow{% endblock %}
+{% block content %}
+<div class="empty-state" style="max-width: 500px; margin: 4rem auto;">
+    <div class="empty-icon">
+        <span class="material-icons" style="font-size: 4rem;">error</span>
+    </div>
+    <h3 class="empty-title">500 — Something went wrong</h3>
+    <p class="empty-text">An unexpected error occurred. Please try again later.</p>
+    <a href="{% url 'core:dashboard' %}" class="btn btn-primary">Go to Dashboard</a>
+</div>
+{% endblock %}

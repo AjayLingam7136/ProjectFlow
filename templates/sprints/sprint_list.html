@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Sprints — ProjectFlow{% endblock %}
+{% block topbar_title %}Sprints{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'sprints:create' %}" class="btn btn-primary btn-sm">
+    <span class="material-icons" style="font-size:1rem;">add</span> New Sprint
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="list-page">
+    <!-- Filters -->
+    <div class="filter-bar">
+        <form method="get" class="filter-bar-inner">
+            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                <option value="planning" {% if active_filter == 'planning' %}selected{% endif %}>Planning</option>
+                <option value="active" {% if active_filter == 'active' %}selected{% endif %}>Active</option>
+                <option value="completed" {% if active_filter == 'completed' %}selected{% endif %}>Completed</option>
+                <option value="cancelled" {% if active_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+        </form>
+    </div>
+
+    {% if sprints %}
+    <div class="card-grid">
+        {% for sprint in sprints %}
+        <div class="card project-card">
+            <a href="{% url 'sprints:detail' sprint.pk %}" class="card-link">
+                <div class="card-header">
+                    <div class="card-title">{{ sprint.name }}</div>
+                    <span class="badge badge-sprint badge-sprint-{{ sprint.status }}">{{ sprint.get_status_display }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="project-card-meta">
+                        <span class="text-secondary">{{ sprint.project.name }}</span>
+                        <span class="text-tertiary fs-xs">{{ sprint.start_date|date:"M d" }} — {{ sprint.end_date|date:"M d, Y" }}</span>
+                    </div>
+                    {% if sprint.goal %}
+                    <p class="text-secondary fs-sm" style="margin-top:0.5rem;">{{ sprint.goal|truncatewords:15 }}</p>
+                    {% endif %}
+                    <div class="sprint-progress-bar" style="margin-top:0.75rem;">
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width: {{ sprint.progress }}%;"></div>
+                        </div>
+                        <span class="fs-xs text-tertiary">{{ sprint.completed_tasks }}/{{ sprint.total_tasks }} tasks</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="material-icons empty-icon">sprint</span>
+        <h3>No sprints yet</h3>
+        <p class="text-secondary">Create your first sprint to start planning iterations.</p>
+        <a href="{% url 'sprints:create' %}" class="btn btn-primary">Create Sprint</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Page Not Found — ProjectFlow{% endblock %}
+{% block content %}
+<div class="empty-state" style="max-width: 500px; margin: 4rem auto;">
+    <div class="empty-icon">
+        <span class="material-icons" style="font-size: 4rem;">error_outline</span>
+    </div>
+    <h3 class="empty-title">404 — Page Not Found</h3>
+    <p class="empty-text">The page you're looking for doesn't exist or has been moved.</p>
+    <a href="{% url 'core:dashboard' %}" class="btn btn-primary">Go to Dashboard</a>
+</div>
+{% endblock %}

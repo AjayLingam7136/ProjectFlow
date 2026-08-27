@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}{{ sprint.name }} — ProjectFlow{% endblock %}
+{% block topbar_title %}{{ sprint.name }}{% endblock %}
+
+{% block topbar_actions %}
+<div style="display:flex; align-items:center; gap:0.5rem;">
+    <a href="{% url 'sprints:detail' sprint.pk %}?add_task=1" class="btn btn-outline btn-sm">
+        <span class="material-icons" style="font-size:1rem;">add</span> Add Task
+    </a>
+    {% if can_edit %}
+    <a href="{% url 'sprints:edit' sprint.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+    <a href="{% url 'sprints:delete' sprint.pk %}" class="btn btn-ghost btn-sm text-error">Delete</a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="detail-page">
+    <!-- Sprint Header -->
+    <div class="detail-header">
+        <div class="detail-header-info">
+            <span class="badge badge-sprint badge-sprint-{{ sprint.status }}">{{ sprint.get_status_display }}</span>
+            <a href="{% url 'projects:detail' sprint.project.pk %}" class="text-secondary fs-sm">{{ sprint.project.name }}</a>
+        </div>
+        <div class="detail-header-meta">
+            <span class="fs-sm text-tertiary">{{ sprint.start_date|date:"M d" }} — {{ sprint.end_date|date:"M d, Y" }}</span>
+            {% if sprint.is_overdue %}
+            <span class="badge badge-error">Overdue</span>
+            {% endif %}
+        </div>
+        {% if sprint.goal %}
+        <p class="text-secondary" style="margin-top:0.5rem;">{{ sprint.goal }}</p>
+        {% endif %}
+        <div class="sprint-progress-bar" style="margin-top:0.75rem; max-width:400px;">
+            <div class="progress-track">
+                <div class="progress-fill" style="width: {{ sprint.progress }}%;"></div>
+            </div>
+            <span class="fs-xs text-tertiary">{{ sprint.completed_tasks }}/{{ sprint.total_tasks }} tasks completed ({{ sprint.progress }}%)</span>
+        </div>
+    </div>
+
+    <!-- Task Board -->
+    <div class="sprint-board">
+        {% for status_code, status_label, color, column_tasks in columns_with_tasks %}
+        <div class="sprint-column">
+            <div class="sprint-column-header" style="border-top-color: {{ color }};">
+                <span class="sprint-column-title">{{ status_label }}</span>
+                <span class="badge badge-sm" style="background-color: {{ color }}20; color: {{ color }};">{{ column_tasks|length }}</span>
+            </div>
+            <div class="sprint-column-body">
+                {% for st in column_tasks %}
+                <div class="sprint-task-card" data-task-id="{{ st.task.pk }}">
+                    <div class="sprint-task-header">
+                        <a href="{% url 'tasks:detail' st.task.pk %}" class="sprint-task-title">{{ st.task.title }}</a>
+                        {% if can_edit %}
+                        <button class="sprint-task-remove" onclick="removeTask({{ sprint.pk }}, {{ st.task.pk }}, this)" title="Remove from sprint">
+                            <span class="material-icons">close</span>
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="sprint-task-meta">
+                        {% if st.task.assignee %}
+                        <span class="sprint-task-assignee">{{ st.task.assignee.get_short_name|default:st.task.assignee.username }}</span>
+                        {% else %}
+                        <span class="sprint-task-assignee text-tertiary">Unassigned</span>
+                        {% endif %}
+                        <span class="badge badge-priority badge-priority-{{ st.task.priority }}">{{ st.task.get_priority_display }}</span>
+                    </div>
+                    {% if st.task.due_date %}
+                    <div class="sprint-task-due{% if st.task.is_overdue %} overdue{% endif %}">
+                        <span class="material-icons" style="font-size:0.8rem;">schedule</span>
+                        {{ st.task.due_date|date:"M d" }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Add Task Modal -->
+    {% if request.GET.add_task %}
+    <div class="modal-overlay" onclick="window.location.href='{% url 'sprints:detail' sprint.pk %}'">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Add Task to Sprint</h3>
+                <a href="{% url 'sprints:detail' sprint.pk %}" class="btn-ghost btn-sm">
+                    <span class="material-icons">close</span>
+                </a>
+            </div>
+            <div class="modal-body">
+                {% if available_tasks %}
+                <div class="task-list-select">
+                    {% for task in available_tasks %}
+                    <div class="task-select-item" onclick="addTask({{ sprint.pk }}, {{ task.pk }}, this)">
+                        <div class="task-select-info">
+                            <span class="task-select-title">{{ task.title }}</span>
+                            <span class="task-select-meta text-tertiary fs-xs">
+                                {{ task.get_status_display }} · {{ task.get_priority_display }}
+                                {% if task.assignee %} · {{ task.assignee.get_short_name }}{% endif %}
+                            </span>
+                        </div>
+                        <span class="material-icons text-tertiary">add_circle_outline</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-secondary" style="text-align:center; padding:2rem;">No available tasks from this project.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function getCookie(name) {
+    var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.startsWith(name + '=')) {
+            return decodeURIComponent(cookie.substring(name.length + 1));
+        }
+    }
+    return '';
+}
+
+function addTask(sprintId, taskId, el) {
+    var formData = new FormData();
+    formData.append('task_id', taskId);
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    fetch('/sprints/' + sprintId + '/add-task/', {
+        method: 'POST',
+        body: formData,
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+            window.location.href = '/sprints/' + sprintId + '/';
+        }
+    });
+}
+
+function removeTask(sprintId, taskId, el) {
+    if (!confirm('Remove this task from the sprint?')) return;
+    var formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    fetch('/sprints/' + sprintId + '/remove-task/' + taskId + '/', {
+        method: 'POST',
+        body: formData,
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+            el.closest('.sprint-task-card').remove();
+        }
+    });
+}
+</script>
+{% endblock %}

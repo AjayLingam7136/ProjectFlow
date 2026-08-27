@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}{% if form.instance.pk %}Edit Project{% else %}Create Project{% endif %} — ProjectFlow{% endblock %}
+{% block topbar_title %}{% if form.instance.pk %}Edit Project{% else %}Create Project{% endif %}{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-card-header">
+            <h2 class="form-card-title">{% if form.instance.pk %}Edit Project{% else %}Create Project{% endif %}</h2>
+        </div>
+        <form method="post" class="form">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.name.label_tag }}
+                {{ form.name }}
+                {% if form.name.errors %}<span class="form-error">{{ form.name.errors }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.description.label_tag }}
+                {{ form.description }}
+                {% if form.description.errors %}<span class="form-error">{{ form.description.errors }}</span>{% endif %}
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form.status.label_tag }}
+                    {{ form.status }}
+                    {% if form.status.errors %}<span class="form-error">{{ form.status.errors }}</span>{% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.priority.label_tag }}
+                    {{ form.priority }}
+                    {% if form.priority.errors %}<span class="form-error">{{ form.priority.errors }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form.start_date.label_tag }}
+                    {{ form.start_date }}
+                    {% if form.start_date.errors %}<span class="form-error">{{ form.start_date.errors }}</span>{% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.due_date.label_tag }}
+                    {{ form.due_date }}
+                    {% if form.due_date.errors %}<span class="form-error">{{ form.due_date.errors }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form.team_members.label_tag }}
+                {{ form.team_members }}
+                {% if form.team_members.errors %}<span class="form-error">{{ form.team_members.errors }}</span>{% endif %}
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{% if form.instance.pk %}Update{% else %}Create{% endif %}</button>
+                <a href="{% url 'projects:list' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

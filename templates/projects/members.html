@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Members — {{ project.name }} — ProjectFlow{% endblock %}
+{% block topbar_title %}{{ project.name }} — Members{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'projects:detail' project.pk %}" class="btn btn-outline btn-sm">Back to Project</a>
+{% endblock %}
+
+{% block content %}
+<div class="project-members">
+    <div class="detail-header">
+        <h1 class="detail-title">Team Members</h1>
+        <div class="detail-meta">
+            <span class="badge badge-primary">{{ memberships|length }} member{{ memberships|length|pluralize }}</span>
+        </div>
+    </div>
+
+    <!-- Owner -->
+    <div class="detail-section">
+        <div class="detail-section-title">Owner</div>
+        <div class="members-grid">
+            <div class="member-card member-card-owner">
+                <div class="member-info">
+                    {% if project.owner.avatar %}
+                    <img src="{{ project.owner.avatar.url }}" alt="{{ project.owner.username }}" class="member-avatar">
+                    {% else %}
+                    <div class="member-avatar-placeholder">{{ project.owner.get_initials }}</div>
+                    {% endif %}
+                    <div>
+                        <div class="member-name">{{ project.owner.get_full_name|default:project.owner.username }}</div>
+                        <div class="member-email">{{ project.owner.email }}</div>
+                    </div>
+                </div>
+                <span class="role-badge role-badge-admin">Owner</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Members -->
+    <div class="detail-section">
+        <div class="detail-section-title">Members</div>
+        {% if memberships %}
+        <div class="members-grid">
+            {% for membership in memberships %}
+            <div class="member-card" data-membership-id="{{ membership.pk }}">
+                <div class="member-info">
+                    {% if membership.user.avatar %}
+                    <img src="{{ membership.user.avatar.url }}" alt="{{ membership.user.username }}" class="member-avatar">
+                    {% else %}
+                    <div class="member-avatar-placeholder">{{ membership.user.get_initials }}</div>
+                    {% endif %}
+                    <div>
+                        <div class="member-name">{{ membership.user.get_full_name|default:membership.user.username }}</div>
+                        <div class="member-email">{{ membership.user.email }}</div>
+                    </div>
+                </div>
+                <div class="member-actions">
+                    {% if user_role == 'admin' or user_role == 'project_manager' or project.owner == user %}
+                    <form method="post" action="{% url 'projects:member_role' project.pk membership.pk %}" class="member-role-form">
+                        {% csrf_token %}
+                        <select name="role" class="form-select form-select-sm role-select" onchange="this.form.submit()">
+                            <option value="admin" {% if membership.role == 'admin' %}selected{% endif %}>Admin</option>
+                            <option value="project_manager" {% if membership.role == 'project_manager' %}selected{% endif %}>Project Manager</option>
+                            <option value="team_member" {% if membership.role == 'team_member' %}selected{% endif %}>Team Member</option>
+                            <option value="viewer" {% if membership.role == 'viewer' %}selected{% endif %}>Viewer</option>
+                        </select>
+                    </form>
+                    <form method="post" action="{% url 'projects:member_remove' project.pk membership.pk %}" class="member-remove-form" onsubmit="return confirm('Remove this member from the project?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-ghost btn-sm text-error" title="Remove member">
+                            <span class="material-icons">close</span>
+                        </button>
+                    </form>
+                    {% else %}
+                    <span class="role-badge role-badge-{{ membership.role }}">{{ membership.get_role_display }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-tertiary">No members yet. Add team members to collaborate.</p>
+        {% endif %}
+    </div>
+
+    <!-- Add Member -->
+    {% if user_role == 'admin' or user_role == 'project_manager' or project.owner == user %}
+    <div class="detail-section">
+        <div class="detail-section-title">Add Member</div>
+        <form method="post" action="{% url 'projects:member_add' project.pk %}">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="id_user">User</label>
+                    {{ member_form.user }}
+                    {% if member_form.user.errors %}<span class="form-error">{{ member_form.user.errors }}</span>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="id_role">Role</label>
+                    {{ member_form.role }}
+                    {% if member_form.role.errors %}<span class="form-error">{{ member_form.role.errors }}</span>{% endif %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Add Member</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

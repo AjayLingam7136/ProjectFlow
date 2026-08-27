@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Calendar — ProjectFlow{% endblock %}
+{% block topbar_title %}Calendar{% endblock %}
+
+{% block topbar_actions %}
+<a href="?year={{ today.year }}&month={{ today.month }}" class="btn btn-outline btn-sm">Today</a>
+{% endblock %}
+
+{% block content %}
+<div class="calendar-page">
+    <!-- Calendar Navigation -->
+    <div class="calendar-header">
+        <a href="?year={{ prev_year }}&month={{ prev_month }}" class="btn btn-ghost btn-sm">
+            <span class="material-icons">chevron_left</span>
+        </a>
+        <h2 class="calendar-title">{{ month_name }} {{ year }}</h2>
+        <a href="?year={{ next_year }}&month={{ next_month }}" class="btn btn-ghost btn-sm">
+            <span class="material-icons">chevron_right</span>
+        </a>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="calendar-container">
+        <!-- Day Headers -->
+        <div class="calendar-grid-header">
+            {% for day_name in day_names %}
+            <div class="calendar-day-header">{{ day_name }}</div>
+            {% endfor %}
+        </div>
+
+        <!-- Calendar Days -->
+        <div class="calendar-grid">
+            {% for week in month_days %}
+            {% for day in week %}
+            <div class="calendar-day{% if day == today.day and month == today.month and year == today.year %} today{% endif %}{% if day == 0 %} other-month{% endif %}">
+                {% if day != 0 %}
+                <div class="calendar-day-number">{{ day }}</div>
+                <div class="calendar-day-events" data-day="{{ day }}"></div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="calendar-legend">
+        <span class="legend-item"><span class="legend-dot" style="background-color: var(--color-primary);"></span> Task</span>
+        <span class="legend-item"><span class="legend-dot" style="background-color: var(--color-secondary);"></span> Project</span>
+        <span class="legend-item"><span class="legend-dot" style="background-color: var(--color-error);"></span> Overdue</span>
+    </div>
+</div>
+
+{{ events|json_script:"calendar-events" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var el = document.getElementById('calendar-events');
+    if (!el) return;
+    var eventsData = JSON.parse(el.textContent);
+
+    document.querySelectorAll('.calendar-day-events').forEach(function(container) {
+        var day = container.getAttribute('data-day');
+        var dayEvents = eventsData[day] || [];
+        dayEvents.forEach(function(evt) {
+            var eventEl = document.createElement('a');
+            eventEl.href = evt.url;
+            eventEl.className = 'calendar-event ' + evt.type + (evt.is_overdue ? ' overdue' : '');
+            eventEl.textContent = evt.title;
+            eventEl.title = evt.title;
+            container.appendChild(eventEl);
+        });
+    });
+});
+</script>
+{% endblock %}

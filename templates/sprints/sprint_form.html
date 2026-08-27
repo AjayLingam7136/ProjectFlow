@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}{% if form.instance.pk %}Edit Sprint{% else %}Create Sprint{% endif %} — ProjectFlow{% endblock %}
+{% block topbar_title %}{% if form.instance.pk %}Edit Sprint{% else %}Create Sprint{% endif %}{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-card-header">
+            <h2 class="form-card-title">{% if form.instance.pk %}Edit {{ form.instance.name }}{% else %}Create New Sprint{% endif %}</h2>
+        </div>
+        <form method="post" class="form">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.project.label_tag }}
+                {{ form.project }}
+                {% if form.project.errors %}<span class="form-error">{{ form.project.errors }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.name.label_tag }}
+                {{ form.name }}
+                {% if form.name.errors %}<span class="form-error">{{ form.name.errors }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.goal.label_tag }}
+                {{ form.goal }}
+                {% if form.goal.errors %}<span class="form-error">{{ form.goal.errors }}</span>{% endif %}
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form.start_date.label_tag }}
+                    {{ form.start_date }}
+                    {% if form.start_date.errors %}<span class="form-error">{{ form.start_date.errors }}</span>{% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.end_date.label_tag }}
+                    {{ form.end_date }}
+                    {% if form.end_date.errors %}<span class="form-error">{{ form.end_date.errors }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form.status.label_tag }}
+                {{ form.status }}
+                {% if form.status.errors %}<span class="form-error">{{ form.status.errors }}</span>{% endif %}
+            </div>
+            {% if form.non_field_errors %}
+                <div class="form-error">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{% if form.instance.pk %}Save Changes{% else %}Create Sprint{% endif %}</button>
+                <a href="{% if form.instance.pk %}{% url 'sprints:detail' form.instance.pk %}{% else %}{% url 'sprints:list' %}{% endif %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profile — ProjectFlow{% endblock %}
+{% block topbar_title %}Edit Profile{% endblock %}
+{% block content %}
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-card-header">
+            <h2 class="form-card-title">Edit Profile</h2>
+        </div>
+        <form method="post" enctype="multipart/form-data" class="form">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form.first_name.label_tag }}
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}<span class="form-error">{{ form.first_name.errors }}</span>{% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.last_name.label_tag }}
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}<span class="form-error">{{ form.last_name.errors }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form.email.label_tag }}
+                {{ form.email }}
+                {% if form.email.errors %}<span class="form-error">{{ form.email.errors }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.bio.label_tag }}
+                {{ form.bio }}
+                {% if form.bio.errors %}<span class="form-error">{{ form.bio.errors }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.avatar.label_tag }}
+                {{ form.avatar }}
+                {% if form.avatar.errors %}<span class="form-error">{{ form.avatar.errors }}</span>{% endif %}
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{% url 'accounts:profile' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

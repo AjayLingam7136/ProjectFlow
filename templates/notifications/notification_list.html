@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Notifications — ProjectFlow{% endblock %}
+{% block topbar_title %}Notifications{% endblock %}
+
+{% block topbar_actions %}
+{% if unread_count > 0 %}
+<button class="btn btn-outline btn-sm" onclick="markAllRead()">Mark all as read</button>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="notification-page">
+    <div class="filter-bar">
+        <a href="{% url 'notifications:list' %}" class="btn btn-sm {% if not current_filter %}btn-primary{% else %}btn-outline{% endif %}">All</a>
+        <a href="{% url 'notifications:list' %}?filter=unread" class="btn btn-sm {% if current_filter == 'unread' %}btn-primary{% else %}btn-outline{% endif %}">
+            Unread {% if unread_count > 0 %}({{ unread_count }}){% endif %}
+        </a>
+    </div>
+
+    {% if notifications %}
+    <div class="notification-list">
+        {% for notification in notifications %}
+        <div class="notification-item {% if not notification.is_read %}notification-unread{% endif %}" data-notification-id="{{ notification.pk }}" onclick="markAsRead({{ notification.pk }})">
+            <div class="notification-icon notification-icon-{{ notification.notification_type }}">
+                <span class="material-icons">
+                    {% if notification.notification_type == 'task_assigned' %}assignment
+                    {% elif notification.notification_type == 'task_status_changed' %}swap_horiz
+                    {% elif notification.notification_type == 'task_mentioned' %}alternate_email
+                    {% elif notification.notification_type == 'task_due_soon' %}schedule
+                    {% elif notification.notification_type == 'task_overdue' %}warning
+                    {% elif notification.notification_type == 'project_updated' %}folder
+                    {% elif notification.notification_type == 'project_member_added' %}person_add
+                    {% elif notification.notification_type == 'comment_added' %}comment
+                    {% elif notification.notification_type == 'role_changed' %}admin_panel_settings
+                    {% else %}notifications{% endif %}
+                </span>
+            </div>
+            <div class="notification-content">
+                <div class="notification-title">{{ notification.title }}</div>
+                <div class="notification-message">{{ notification.message }}</div>
+                <div class="notification-time">{{ notification.created_at|timesince }} ago</div>
+            </div>
+            {% if not notification.is_read %}
+            <div class="notification-dot"></div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if current_filter %}&filter={{ current_filter }}{% endif %}" class="page-link">&laquo;</a>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+        <a href="?page={{ num }}{% if current_filter %}&filter={{ current_filter }}{% endif %}" class="page-link {% if num == page_obj.number %}active{% endif %}">{{ num }}</a>
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if current_filter %}&filter={{ current_filter }}{% endif %}" class="page-link">&raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <span class="material-icons">notifications_none</span>
+        </div>
+        <h3 class="empty-title">No notifications</h3>
+        <p class="empty-text">You're all caught up!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function markAsRead(id) {
+    fetch('/notifications/' + id + '/read/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+            var item = document.querySelector('[data-notification-id="' + id + '"]');
+            if (item) {
+                item.classList.remove('notification-unread');
+                var dot = item.querySelector('.notification-dot');
+                if (dot) dot.remove();
+            }
+        }
+    });
+}
+
+function markAllRead() {
+    fetch('/notifications/read-all/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+            document.querySelectorAll('.notification-unread').forEach(function(el) {
+                el.classList.remove('notification-unread');
+                var dot = el.querySelector('.notification-dot');
+                if (dot) dot.remove();
+            });
+        }
+    });
+}
+</script>
+{% endblock %}

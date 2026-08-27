@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Projects — ProjectFlow{% endblock %}
+{% block topbar_title %}Projects{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'projects:create' %}" class="btn btn-primary btn-sm">New Project</a>
+{% endblock %}
+
+{% block content %}
+<div class="projects-list">
+    <!-- Filter Bar -->
+    <form method="get" class="filter-bar">
+        <div class="form-group" style="margin-bottom: 0;">
+            {{ filter_form.q }}
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            {{ filter_form.status }}
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            {{ filter_form.priority }}
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            {{ filter_form.sort }}
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+    </form>
+
+    {% if projects %}
+    <div class="grid sm-grid-cols-2 lg-grid-cols-3">
+        {% for project in projects %}
+        {% include 'projects/project_card.html' with project=project %}
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page=1" class="page-link">&laquo;</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="page-link">Prev</a>
+        {% else %}
+        <span class="page-link disabled">&laquo;</span>
+        {% endif %}
+
+        {% for num in paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="page-link active">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}" class="page-link">{{ num }}</a>
+        {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="page-link">Next</a>
+        <a href="?page={{ paginator.num_pages }}" class="page-link">&raquo;</a>
+        {% else %}
+        <span class="page-link disabled">&raquo;</span>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <span class="material-icons">search_off</span>
+        </div>
+        <h3 class="empty-title">No projects found</h3>
+        <p class="empty-text">Try adjusting your search or filter criteria.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

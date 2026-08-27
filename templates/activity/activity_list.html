@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Activity — ProjectFlow{% endblock %}
+{% block topbar_title %}Activity{% endblock %}
+
+{% block content %}
+<div class="activity-page">
+    <div class="section-header">
+        <h2 class="section-title">Recent Activity</h2>
+    </div>
+
+    {% if activities %}
+    <div class="card">
+        <ul class="activity-feed">
+            {% for activity in activities %}
+            <li class="activity-item">
+                <div class="activity-avatar">{{ activity.user.get_initials }}</div>
+                <div class="activity-content">
+                    <div class="activity-message">{{ activity.message }}</div>
+                    <div class="activity-time">{{ activity.created_at|date:"M d, Y g:i A" }}</div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page=1" class="page-link">&laquo;</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="page-link">Prev</a>
+        {% endif %}
+
+        {% for num in paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="page-link active">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}" class="page-link">{{ num }}</a>
+        {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="page-link">Next</a>
+        <a href="?page={{ paginator.num_pages }}" class="page-link">&raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <span class="material-icons">history</span>
+        </div>
+        <h3 class="empty-title">No activity yet</h3>
+        <p class="empty-text">Your activity history will appear here as you work.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Issues — ProjectFlow{% endblock %}
+{% block topbar_title %}Issues{% endblock %}
+
+{% block topbar_actions %}
+<div class="kanban-filters">
+    <select class="form-select form-select-sm" id="kanban-project-filter" onchange="filterByProject(this.value)">
+        <option value="">All Projects</option>
+        {% for project in projects %}
+        <option value="{{ project.pk }}" {% if selected_project == project.pk %}selected{% endif %}>{{ project.name }}</option>
+        {% endfor %}
+    </select>
+</div>
+<a href="{% url 'issues:create' %}" class="btn btn-primary btn-sm">New Issue</a>
+{% endblock %}
+
+{% block content %}
+<div class="kanban-board" id="kanban-board" data-board-type="issues">
+    {% for status, label, issues in columns %}
+    <div class="kanban-column" data-status="{{ status }}">
+        <div class="kanban-column-header">
+            <div class="kanban-column-title">
+                <span class="kanban-column-dot" style="background-color: var(--color-task-{% if status == 'open' %}open{% elif status == 'assigned' %}assigned{% elif status == 'in_progress' %}in-progress{% elif status == 'fixed' %}fixed{% elif status == 'closed' %}closed{% elif status == 'reopen' %}reopen{% endif %});"></span>
+                {{ label }}
+                <span class="kanban-column-count">{{ issues.count }}</span>
+            </div>
+        </div>
+        <div class="kanban-column-body" data-status="{{ status }}">
+            {% for issue in issues %}
+            <div class="kanban-card" draggable="true" data-task-id="{{ issue.pk }}" data-status="{{ issue.status }}">
+                <div class="kanban-card-header">
+                    <a href="{% url 'issues:detail' issue.pk %}" class="kanban-card-title">{{ issue.title }}</a>
+                </div>
+                <div class="kanban-card-meta">
+                    <span class="badge badge-priority-{{ issue.priority }} badge-sm">{{ issue.get_priority_display }}</span>
+                    <span class="badge badge-severity-{{ issue.severity }} badge-sm">{{ issue.get_severity_display }}</span>
+                    {% if issue.due_date %}
+                    <span class="kanban-card-due {% if issue.is_overdue %}overdue{% endif %}">
+                        <span class="material-icons icon-sm">schedule</span>
+                        {{ issue.due_date|date:"M d" }}
+                    </span>
+                    {% endif %}
+                </div>
+                {% if issue.tags.all %}
+                <div class="task-tags">
+                    {% for tag in issue.tags.all|slice:":3" %}
+                    <span class="tag tag-sm" style="background-color: {{ tag.color|default:'#4a5c73' }}20; color: {{ tag.color|default:'#7b8da4' }};">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="kanban-card-footer">
+                    <div class="kanban-card-project">{{ issue.project.name }}</div>
+                    {% if issue.assignee %}
+                    <div class="kanban-card-assignee">
+                        <div class="team-avatar-placeholder" style="width:24px;height:24px;font-size:0.5rem;">{{ issue.assignee.get_initials }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/kanban.js' %}"></script>
+<script>
+    function filterByProject(projectId) {
+        var url = new URL(window.location);
+        if (projectId) {
+            url.searchParams.set('project', projectId);
+        } else {
+            url.searchParams.delete('project');
+        }
+        window.location = url;
+    }
+</script>
+{% endblock %}

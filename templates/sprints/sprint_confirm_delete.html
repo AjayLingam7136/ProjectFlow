@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Delete {{ object.name }} — ProjectFlow{% endblock %}
+{% block topbar_title %}Delete Sprint{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-card" style="max-width: 500px; text-align: center;">
+        <div class="form-card-header">
+            <h2 class="form-card-title">Delete Sprint</h2>
+        </div>
+        <p class="text-secondary" style="margin: 1.5rem 0;">
+            Are you sure you want to delete <strong>{{ object.name }}</strong>?
+            This will remove all task associations from this sprint but will not delete the tasks themselves.
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-actions" style="justify-content: center;">
+                <button type="submit" class="btn btn-danger">Delete Sprint</button>
+                <a href="{% url 'sprints:detail' object.pk %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

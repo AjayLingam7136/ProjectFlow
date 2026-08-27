@@ -1,0 +1,64 @@
+{% load static %}
+<div class="task-card">
+    <div class="task-card-header">
+        <div>
+            <h3 class="task-card-title">{{ task.title }}</h3>
+            <div class="task-card-meta">
+                <span class="badge badge-task-{{ task.status }}">{{ task.get_status_display }}</span>
+                <span class="badge badge-priority-{{ task.priority }}">{{ task.get_priority_display }}</span>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="btn-ghost btn-sm" data-dropdown-toggle="task-menu-{{ task.id }}">
+                <span class="material-icons">more_vert</span>
+            </button>
+            <div class="dropdown-menu" id="task-menu-{{ task.id }}">
+                <a href="{% url 'tasks:detail' task.pk %}" class="dropdown-item">View</a>
+                <a href="{% url 'tasks:edit' task.pk %}" class="dropdown-item">Edit</a>
+                <div class="dropdown-divider"></div>
+                <a href="{% url 'tasks:delete' task.pk %}" class="dropdown-item">Delete</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="task-card-body">
+        {% if task.description %}
+        <p class="task-card-description">{{ task.description|truncatewords:20 }}</p>
+        {% else %}
+        <p class="task-card-description text-tertiary fst-italic">No description.</p>
+        {% endif %}
+
+        {% if task.tags.all %}
+        <div class="task-tags">
+            {% for tag in task.tags.all %}
+            <span class="tag" style="background-color: {{ tag.color|default:'#4a5c73' }}20; color: {{ tag.color|default:'#7b8da4' }};">{{ tag.name }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="task-card-footer">
+        <div class="task-assignee">
+            {% if task.assignee %}
+            {% if task.assignee.avatar %}
+            <img src="{{ task.assignee.avatar.url }}" alt="{{ task.assignee.username }}" class="team-avatar" style="width: 24px; height: 24px;">
+            {% else %}
+            <div class="team-avatar-placeholder" style="width: 24px; height: 24px; font-size: 0.5rem;">{{ task.assignee.get_initials }}</div>
+            {% endif %}
+            <span>{{ task.assignee.get_short_name|default:task.assignee.username }}</span>
+            {% else %}
+            <span class="material-icons icon-sm text-tertiary">person_outline</span>
+            <span class="text-tertiary">Unassigned</span>
+            {% endif %}
+        </div>
+        <div class="task-card-due {% if task.is_overdue %}overdue{% endif %}">
+            {% if task.due_date %}
+            <span class="material-icons icon-sm">event</span>
+            {{ task.due_date|date:"M d, Y" }}
+            {% else %}
+            <span class="material-icons icon-sm">event</span>
+            No due date
+            {% endif %}
+        </div>
+    </div>
+</div>

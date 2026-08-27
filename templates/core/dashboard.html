@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dashboard — ProjectFlow{% endblock %}
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'projects:create' %}" class="btn btn-primary btn-sm">New Project</a>
+<a href="{% url 'tasks:create' %}" class="btn btn-outline btn-sm">New Task</a>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <!-- Summary Cards -->
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="summary-icon summary-icon-primary">
+                <span class="material-icons">folder</span>
+            </div>
+            <div class="summary-value">{{ total_projects }}</div>
+            <div class="summary-label">Total Projects</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-icon summary-icon-success">
+                <span class="material-icons">folder_open</span>
+            </div>
+            <div class="summary-value">{{ active_projects }}</div>
+            <div class="summary-label">Active Projects</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-icon summary-icon-warning">
+                <span class="material-icons">pending_actions</span>
+            </div>
+            <div class="summary-value">{{ active_tasks }}</div>
+            <div class="summary-label">Active Tasks</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-icon summary-icon-error">
+                <span class="material-icons">warning</span>
+            </div>
+            <div class="summary-value">{{ overdue_tasks }}</div>
+            <div class="summary-label">Overdue Tasks</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-icon summary-icon-primary">
+                <span class="material-icons">bug_report</span>
+            </div>
+            <div class="summary-value">{{ active_issues }}</div>
+            <div class="summary-label">Open Issues</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-icon summary-icon-error">
+                <span class="material-icons">report_problem</span>
+            </div>
+            <div class="summary-value">{{ overdue_issues }}</div>
+            <div class="summary-label">Overdue Issues</div>
+        </div>
+    </div>
+
+    <!-- Projects Section -->
+    <div class="section-header">
+        <h2 class="section-title">Your Projects</h2>
+        <a href="{% url 'projects:list' %}" class="btn btn-ghost btn-sm">View all</a>
+    </div>
+
+    {% if projects %}
+    <div class="grid sm-grid-cols-2 lg-grid-cols-3">
+        {% for project in projects %}
+        {% include 'projects/project_card.html' with project=project %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <span class="material-icons">folder_off</span>
+        </div>
+        <h3 class="empty-title">No projects yet</h3>
+        <p class="empty-text">Create your first project to get started with ProjectFlow.</p>
+        <a href="{% url 'projects:create' %}" class="btn btn-primary">Create Project</a>
+    </div>
+    {% endif %}
+
+    <!-- Upcoming Deadlines -->
+    <div class="section-header mt-4">
+        <h2 class="section-title">Upcoming Deadlines & Overdue</h2>
+    </div>
+
+    {% if upcoming_tasks or upcoming_issues %}
+    {% if upcoming_tasks %}
+    <h3 class="fs-sm fw-600 text-secondary mb-2">Tasks</h3>
+    <div class="grid sm-grid-cols-2 lg-grid-cols-3 mb-3">
+        {% for task in upcoming_tasks %}
+        {% include 'tasks/task_card.html' with task=task %}
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if upcoming_issues %}
+    <h3 class="fs-sm fw-600 text-secondary mb-2">Issues</h3>
+    <div class="grid sm-grid-cols-2 lg-grid-cols-3">
+        {% for issue in upcoming_issues %}
+        <div class="task-card">
+            <div class="task-card-header">
+                <div>
+                    <h3 class="task-card-title"><a href="{% url 'issues:detail' issue.pk %}">{{ issue.title }}</a></h3>
+                    <div class="task-card-meta">
+                        <span class="badge badge-task-{{ issue.status }}">{{ issue.get_status_display }}</span>
+                        <span class="badge badge-priority-{{ issue.priority }}">{{ issue.get_priority_display }}</span>
+                        <span class="badge badge-severity-{{ issue.severity }}">{{ issue.get_severity_display }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="task-card-footer">
+                <div class="task-assignee">
+                    {% if issue.assignee %}
+                    <div class="team-avatar-placeholder" style="width: 24px; height: 24px; font-size: 0.5rem;">{{ issue.assignee.get_initials }}</div>
+                    <span>{{ issue.assignee.get_short_name|default:issue.assignee.username }}</span>
+                    {% else %}
+                    <span class="material-icons icon-sm text-tertiary">person_outline</span>
+                    <span class="text-tertiary">Unassigned</span>
+                    {% endif %}
+                </div>
+                <div class="task-card-due {% if issue.is_overdue %}overdue{% endif %}">
+                    {% if issue.due_date %}
+                    <span class="material-icons icon-sm">event</span>
+                    {{ issue.due_date|date:"M d, Y" }}
+                    {% else %}
+                    <span class="material-icons icon-sm">event</span>
+                    No due date
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <span class="material-icons">event_busy</span>
+        </div>
+        <h3 class="empty-title">No upcoming deadlines</h3>
+        <p class="empty-text">You have no overdue tasks or issues, and nothing due in the next 7 days. Enjoy your productive day!</p>
+    </div>
+    {% endif %}
+
+    <!-- Recent Activity -->
+    <div class="section-header mt-4">
+        <h2 class="section-title">Recent Activity</h2>
+    </div>
+
+    {% if recent_activities %}
+    <div class="card">
+        <ul class="activity-feed">
+            {% for activity in recent_activities %}
+            <li class="activity-item">
+                <div class="activity-avatar">{{ activity.user.get_initials }}</div>
+                <div class="activity-content">
+                    <div class="activity-message">{{ activity.message }}</div>
+                    <div class="activity-time">{{ activity.created_at|date:"M d, Y g:i A" }}</div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <span class="material-icons">history</span>
+        </div>
+        <h3 class="empty-title">No recent activity</h3>
+        <p class="empty-text">Activity will appear here as you work on your projects.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

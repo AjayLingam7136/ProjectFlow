@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}{% if form.instance.pk %}Edit Issue{% else %}New Issue{% endif %} — ProjectFlow{% endblock %}
+{% block topbar_title %}{% if form.instance.pk %}Edit Issue{% else %}New Issue{% endif %}{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-card">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.errors %}<span class="form-error">{{ field.errors.0 }}</span>{% endif %}
+                {% if field.help_text %}<span class="form-help">{{ field.help_text }}</span>{% endif %}
+            </div>
+            {% endfor %}
+            <div class="form-actions">
+                <a href="{% url 'issues:list' %}" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-primary">{% if form.instance.pk %}Save Changes{% else %}Create Issue{% endif %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

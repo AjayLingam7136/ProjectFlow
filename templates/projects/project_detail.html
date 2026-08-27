@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ project.name }} — ProjectFlow{% endblock %}
+{% block topbar_title %}{{ project.name }}{% endblock %}
+
+{% block topbar_actions %}
+{% if project.user_can_edit or project.owner == user %}
+<a href="{% url 'projects:edit' project.pk %}" class="btn btn-outline btn-sm">Edit</a>
+<a href="{% url 'projects:delete' project.pk %}" class="btn btn-danger btn-sm">Delete</a>
+{% endif %}
+<button class="btn btn-ghost btn-sm" id="bookmark-btn" onclick="toggleBookmark()">
+    <span class="material-icons">{% if is_bookmarked %}bookmark{% else %}bookmark_border{% endif %}</span>
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="project-detail">
+    <div class="detail-header">
+        <h1 class="detail-title">{{ project.name }}</h1>
+        <div class="detail-meta">
+            <span class="badge badge-status-{{ project.status }}">{{ project.get_status_display }}</span>
+            <span class="badge badge-priority-{{ project.priority }}">{{ project.get_priority_display }}</span>
+            {% if user_role %}
+            <span class="role-badge role-badge-{{ user_role }}">{{ user_role|title }}</span>
+            {% endif %}
+            {% if overdue_tasks > 0 %}
+            <span class="badge badge-error">{{ overdue_tasks }} overdue</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-nav">
+        <button class="tab-btn active" data-tab="overview">Overview</button>
+        <button class="tab-btn" data-tab="tasks">Tasks ({{ task_summary.total }})</button>
+        <button class="tab-btn" data-tab="activity">Activity</button>
+        <button class="tab-btn" data-tab="members">Team</button>
+    </div>
+
+    <!-- Overview Tab -->
+    <div class="tab-panel active" id="tab-overview">
+        <div class="detail-section">
+            {% if project.description %}
+            <p class="detail-description">{{ project.description|linebreaks }}</p>
+            {% else %}
+            <p class="text-tertiary fst-italic">No description provided.</p>
+            {% endif %}
+
+            <!-- Progress -->
+            <div class="mt-3">
+                <div class="flex-between mb-1">
+                    <span class="fw-500 fs-sm">Progress</span>
+                    <span class="fw-500 fs-sm">{{ project.progress }}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill {% if project.progress == 100 %}progress-bar-success{% endif %}"
+                         style="width: {{ project.progress }}%;" data-percent="{{ project.progress }}"></div>
+                </div>
+                <div class="fs-xs text-muted mt-1">
+                    {{ project.completed_tasks_count }} of {{ task_summary.total }} tasks completed
+                </div>
+            </div>
+
+            <!-- Dates & Owner -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1.5rem;">
+                <div>
+                    <div class="fs-xs text-secondary mb-1">Start Date</div>
+                    <div class="fw-500 fs-sm">
+                        {% if project.start_date %}{{ project.start_date|date:"M d, Y" }}{% else %}<span class="text-tertiary">Not set</span>{% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div class="fs-xs text-secondary mb-1">Due Date</div>
+                    <div class="fw-500 fs-sm {% if project.is_overdue %}text-error{% endif %}">
+                        {% if project.due_date %}{{ project.due_date|date:"M d, Y" }}{% else %}<span class="text-tertiary">Not set</span>{% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div class="fs-xs text-secondary mb-1">Owner</div>
+                    <div class="fw-500 fs-sm">{{ project.owner.get_full_name|default:project.owner.username }}</div>
+                </div>
+                <div>
+                    <div class="fs-xs text-secondary mb-1">Team</div>
+                    <div class="team-avatars mt-1">
+                        {% for member in project.team_members.all|slice:":5" %}
+                        {% if member.avatar %}
+                        <img src="{{ member.avatar.url }}" alt="{{ member.username }}" class="team-avatar">
+                        {% else %}
+                        <div class="team-avatar-placeholder">{{ member.get_initials }}</div>
+                        {% endif %}
+                        {% endfor %}
+                        {% if project.team_members.count > 5 %}
+                        <span class="fs-xs text-muted ml-1">+{{ project.team_members.count|add:"-5" }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Distribution Chart -->
+        <div class="detail-section">
+            <div class="detail-section-title">Task Distribution</div>
+            <div class="task-distribution">
+                {% with total=task_summary.total %}
+                {% if total > 0 %}
+                <div class="distribution-bar">
+                    {% if task_summary.todo > 0 %}
+                    <div class="distribution-segment" style="flex: {{ task_summary.todo }}; background-color: var(--color-todo);" title="To Do: {{ task_summary.todo }}"></div>
+                    {% endif %}
+                    {% if task_summary.in_progress > 0 %}
+                    <div class="distribution-segment" style="flex: {{ task_summary.in_progress }}; background-color: var(--color-task-in-progress);" title="In Progress: {{ task_summary.in_progress }}"></div>
+                    {% endif %}
+                    {% if task_summary.in_review > 0 %}
+                    <div class="distribution-segment" style="flex: {{ task_summary.in_review }}; background-color: var(--color-in-review);" title="In Review: {{ task_summary.in_review }}"></div>
+                    {% endif %}
+                    {% if task_summary.completed > 0 %}
+                    <div class="distribution-segment" style="flex: {{ task_summary.completed }}; background-color: var(--color-task-completed);" title="Completed: {{ task_summary.completed }}"></div>
+                    {% endif %}
+                    {% if task_summary.blocked > 0 %}
+                    <div class="distribution-segment" style="flex: {{ task_summary.blocked }}; background-color: var(--color-blocked);" title="Blocked: {{ task_summary.blocked }}"></div>
+                    {% endif %}
+                </div>
+                <div class="distribution-legend">
+                    <span class="legend-item"><span class="legend-dot" style="background-color: var(--color-todo);"></span> To Do ({{ task_summary.todo }})</span>
+                    <span class="legend-item"><span class="legend-dot" style="background-color: var(--color-task-in-progress);"></span> In Progress ({{ task_summary.in_progress }})</span>
+                    <span class="legend-item"><span class="legend-dot" style="background-color: var(--color-in-review);"></span> In Review ({{ task_summary.in_review }})</span>
+                    <span class="legend-item"><span class="legend-dot" style="background-color: var(--color-task-completed);"></span> Completed ({{ task_summary.completed }})</span>
+                    {% if task_summary.blocked > 0 %}
+                    <span class="legend-item"><span class="legend-dot" style="background-color: var(--color-blocked);"></span> Blocked ({{ task_summary.blocked }})</span>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="text-tertiary">No tasks yet.</p>
+                {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+
+        <!-- Upcoming Milestones -->
+        {% if upcoming_milestones %}
+        <div class="detail-section">
+            <div class="detail-section-title">Upcoming Deadlines</div>
+            {% for task in upcoming_milestones %}
+            <div class="detail-row">
+                <div>
+                    <a href="{% url 'tasks:detail' task.pk %}" class="fw-500 fs-sm text-primary">{{ task.title }}</a>
+                    <div class="fs-xs text-muted">{{ task.get_status_display }}</div>
+                </div>
+                <div class="fw-500 fs-sm {% if task.is_overdue %}text-error{% endif %}">
+                    {{ task.due_date|date:"M d" }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Tasks Tab -->
+    <div class="tab-panel" id="tab-tasks">
+        <div class="section-header">
+            <h2 class="section-title">All Tasks</h2>
+            {% if project.user_can_manage_tasks or project.owner == user %}
+            <a href="{% url 'tasks:create' %}?project={{ project.pk }}" class="btn btn-primary btn-sm">Add Task</a>
+            {% endif %}
+        </div>
+
+        {% if project.tasks.all %}
+        <div class="grid sm-grid-cols-2 lg-grid-cols-3">
+            {% for task in project.tasks.all %}
+            {% include 'tasks/task_card.html' with task=task %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <span class="material-icons">task_alt</span>
+            </div>
+            <h3 class="empty-title">No tasks yet</h3>
+            <p class="empty-text">Add tasks to track work for this project.</p>
+            <a href="{% url 'tasks:create' %}?project={{ project.pk }}" class="btn btn-primary">Create Task</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Activity Tab -->
+    <div class="tab-panel" id="tab-activity">
+        <div class="detail-section">
+            <div class="activity-feed" id="project-activity-feed">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p class="mt-2 text-muted">Loading activity...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Members Tab -->
+    <div class="tab-panel" id="tab-members">
+        <div class="section-header">
+            <h2 class="section-title">Team Members</h2>
+            <a href="{% url 'projects:members' project.pk %}" class="btn btn-outline btn-sm">Manage Members</a>
+        </div>
+
+        <div class="members-grid">
+            <div class="member-card member-card-owner">
+                <div class="member-info">
+                    {% if project.owner.avatar %}
+                    <img src="{{ project.owner.avatar.url }}" alt="{{ project.owner.username }}" class="member-avatar">
+                    {% else %}
+                    <div class="member-avatar-placeholder">{{ project.owner.get_initials }}</div>
+                    {% endif %}
+                    <div>
+                        <div class="member-name">{{ project.owner.get_full_name|default:project.owner.username }}</div>
+                        <div class="member-email">{{ project.owner.email }}</div>
+                    </div>
+                </div>
+                <span class="role-badge role-badge-admin">Owner</span>
+            </div>
+            {% for membership in memberships %}
+            <div class="member-card">
+                <div class="member-info">
+                    {% if membership.user.avatar %}
+                    <img src="{{ membership.user.avatar.url }}" alt="{{ membership.user.username }}" class="member-avatar">
+                    {% else %}
+                    <div class="member-avatar-placeholder">{{ membership.user.get_initials }}</div>
+                    {% endif %}
+                    <div>
+                        <div class="member-name">{{ membership.user.get_full_name|default:membership.user.username }}</div>
+                        <div class="member-email">{{ membership.user.email }}</div>
+                    </div>
+                </div>
+                <span class="role-badge role-badge-{{ membership.role }}">{{ membership.get_role_display }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleBookmark() {
+    fetch('{% url "projects:bookmark" project.pk %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}',
+        },
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            var btn = document.getElementById('bookmark-btn');
+            btn.querySelector('.material-icons').textContent = data.is_bookmarked ? 'bookmark' : 'bookmark_border';
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+            btn.classList.add('active');
+            var tabId = 'tab-' + btn.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+
+            if (btn.getAttribute('data-tab') === 'activity') {
+                loadActivity();
+            }
+        });
+    });
+
+    // URL hash tab switching
+    var hash = window.location.hash;
+    if (hash) {
+        var tabBtn = document.querySelector('.tab-btn[data-tab="' + hash.replace('#tab-', '') + '"]');
+        if (tabBtn) tabBtn.click();
+    }
+
+    function loadActivity() {
+        var feed = document.getElementById('project-activity-feed');
+        fetch('/activity/object/Project/{{ project.pk }}/')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.activities.length === 0) {
+                    feed.innerHTML = '<p class="text-tertiary fst-italic">No activity recorded yet.</p>';
+                    return;
+                }
+                var html = '';
+                data.activities.forEach(function(a) {
+                    html += '<div class="activity-item">' +
+                        '<div class="activity-avatar">' + a.user_initials + '</div>' +
+                        '<div class="activity-content">' +
+                        '<div class="activity-message"><strong>' + a.user + '</strong> ' + a.message + '</div>' +
+                        '<div class="activity-time">' + new Date(a.created_at).toLocaleString() + '</div>' +
+                        '</div></div>';
+                });
+                feed.innerHTML = html;
+            });
+    }
+});
+</script>
+{% endblock %}

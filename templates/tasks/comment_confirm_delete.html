@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Delete Comment — ProjectFlow{% endblock %}
+{% block topbar_title %}Delete Comment{% endblock %}
+
+{% block content %}
+<div class="confirm-card">
+    <div class="confirm-card-icon">
+        <span class="material-icons">delete</span>
+    </div>
+    <h2 class="confirm-card-title">Delete Comment?</h2>
+    <p class="confirm-card-message">
+        This will permanently delete your comment on "{{ comment.task.title }}". This action cannot be undone.
+    </p>
+    <div class="confirm-card-actions">
+        <a href="{% url 'tasks:detail' comment.task.pk %}" class="btn btn-outline">Cancel</a>
+        <form method="post" action="{% url 'tasks:comment_delete' comment.task.pk comment.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Delete Comment</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

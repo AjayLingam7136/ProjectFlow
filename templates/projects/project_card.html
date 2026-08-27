@@ -1,0 +1,67 @@
+{% load static %}
+<div class="project-card">
+    <div class="project-card-header">
+        <div>
+            <h3 class="project-card-title">{{ project.name }}</h3>
+            <div class="project-card-meta">
+                <span class="badge badge-status-{{ project.status }}">{{ project.get_status_display }}</span>
+                <span class="badge badge-priority-{{ project.priority }}">{{ project.get_priority_display }}</span>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="btn-ghost btn-sm" data-dropdown-toggle="project-menu-{{ project.id }}">
+                <span class="material-icons">more_vert</span>
+            </button>
+            <div class="dropdown-menu" id="project-menu-{{ project.id }}">
+                <a href="{% url 'projects:detail' project.pk %}" class="dropdown-item">View</a>
+                {% if project.owner == user %}
+                <a href="{% url 'projects:edit' project.pk %}" class="dropdown-item">Edit</a>
+                <a href="{% url 'projects:delete' project.pk %}" class="dropdown-item">Delete</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="project-card-body">
+        {% if project.description %}
+        <p class="project-card-description">{{ project.description|truncatewords:20 }}</p>
+        {% else %}
+        <p class="project-card-description text-tertiary fst-italic">No description yet.</p>
+        {% endif %}
+
+        <div class="project-card-progress">
+            <div class="progress-bar">
+                <div class="progress-bar-fill {% if project.progress == 100 %}progress-bar-success{% elif project.is_overdue %}progress-bar-warning{% endif %}"
+                     style="width: {{ project.progress }}%;" data-percent="{{ project.progress }}"></div>
+            </div>
+            <div class="flex-between fs-xs text-muted mt-1">
+                <span>{{ project.progress }}% complete</span>
+                <span>{{ project.tasks.count }} tasks</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="project-card-footer">
+        <div class="team-avatars">
+            {% for member in project.get_team_avatars %}
+            {% if member.avatar %}
+            <img src="{{ member.avatar.url }}" alt="{{ member.username }}" class="team-avatar">
+            {% else %}
+            <div class="team-avatar-placeholder">{{ member.get_initials }}</div>
+            {% endif %}
+            {% endfor %}
+            {% if project.get_remaining_members > 0 %}
+            <div class="team-more">+{{ project.get_remaining_members }}</div>
+            {% endif %}
+        </div>
+        <div class="project-deadline {% if project.is_overdue %}overdue{% endif %}">
+            {% if project.due_date %}
+            <span class="material-icons icon-sm">event</span>
+            {{ project.due_date|date:"M d, Y" }}
+            {% else %}
+            <span class="material-icons icon-sm">event</span>
+            No deadline
+            {% endif %}
+        </div>
+    </div>
+</div>

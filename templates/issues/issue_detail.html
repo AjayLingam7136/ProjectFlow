@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ issue.title }} — ProjectFlow{% endblock %}
+{% block topbar_title %}{{ issue.title }}{% endblock %}
+
+{% block topbar_actions %}
+{% if issue.project.user_can_edit or issue.project.owner == user or issue.created_by == user %}
+<a href="{% url 'issues:edit' issue.pk %}" class="btn btn-outline btn-sm">Edit</a>
+<a href="{% url 'issues:delete' issue.pk %}" class="btn btn-danger btn-sm">Delete</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="task-detail">
+    <div class="detail-header">
+        <h1 class="detail-title">{{ issue.title }}</h1>
+        <div class="detail-meta">
+            <span class="badge badge-task-{{ issue.status }}">{{ issue.get_status_display }}</span>
+            <span class="badge badge-priority-{{ issue.priority }}">{{ issue.get_priority_display }}</span>
+            <span class="badge badge-severity-{{ issue.severity }}">{{ issue.get_severity_display }}</span>
+            {% if issue.is_overdue %}
+            <span class="badge badge-error">Overdue</span>
+            {% endif %}
+            {% if user_role %}
+            <span class="role-badge role-badge-{{ user_role }}">{{ user_role|title }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-nav">
+        <button class="tab-btn active" data-tab="overview">Overview</button>
+        <button class="tab-btn" data-tab="comments">Comments ({{ issue.comments.count }})</button>
+        <button class="tab-btn" data-tab="activity">Activity</button>
+    </div>
+
+    <!-- Overview Tab -->
+    <div class="tab-panel active" id="tab-overview">
+        <div class="detail-section">
+            {% if issue.description %}
+            <p class="detail-description mb-3">{{ issue.description|linebreaks }}</p>
+            {% else %}
+            <p class="text-tertiary fst-italic">No description provided.</p>
+            {% endif %}
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem;">
+                <div>
+                    <div class="fs-xs text-secondary mb-1">Project</div>
+                    <div class="fw-500 fs-sm">
+                        <a href="{% url 'projects:detail' issue.project.pk %}" class="text-primary">{{ issue.project.name }}</a>
+                    </div>
+                </div>
+                <div>
+                    <div class="fs-xs text-secondary mb-1">Assignee</div>
+                    <div class="fw-500 fs-sm">
+                        {% if issue.assignee %}{{ issue.assignee.get_full_name|default:issue.assignee.username }}{% else %}<span class="text-tertiary">Unassigned</span>{% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div class="fs-xs text-secondary mb-1">Due Date</div>
+                    <div class="fw-500 fs-sm {% if issue.is_overdue %}text-error{% endif %}">
+                        {% if issue.due_date %}{{ issue.due_date|date:"M d, Y" }}{% else %}<span class="text-tertiary">Not set</span>{% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div class="fs-xs text-secondary mb-1">Severity</div>
+                    <div class="fw-500 fs-sm">{{ issue.get_severity_display }}</div>
+                </div>
+                <div>
+                    <div class="fs-xs text-secondary mb-1">Created</div>
+                    <div class="fw-500 fs-sm">{{ issue.created_at|date:"M d, Y" }}</div>
+                </div>
+            </div>
+
+            {% if issue.steps_to_reproduce %}
+            <div class="mt-3">
+                <div class="fs-xs text-secondary mb-1">Steps to Reproduce</div>
+                <div class="fw-500 fs-sm">{{ issue.steps_to_reproduce|linebreaks }}</div>
+            </div>
+            {% endif %}
+
+            {% if issue.resolution %}
+            <div class="mt-3">
+                <div class="fs-xs text-secondary mb-1">Resolution</div>
+                <div class="fw-500 fs-sm">{{ issue.resolution|linebreaks }}</div>
+            </div>
+            {% endif %}
+
+            {% if issue.tags.all %}
+            <div class="mt-3">
+                <div class="fs-xs text-secondary mb-1">Tags</div>
+                <div class="task-tags">
+                    {% for tag in issue.tags.all %}
+                    <span class="tag" style="background-color: {{ tag.color|default:'#4a5c73' }}20; color: {{ tag.color|default:'#7b8da4' }};">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'issues:status' issue.pk %}" class="mt-3">
+                {% csrf_token %}
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span class="fw-500 fs-sm">Status:</span>
+                    <div class="status-select-wrap">
+                        {{ issue_status_form.status }}
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                </div>
+            </form>
+
+            <form method="post" action="{% url 'issues:resolution' issue.pk %}" class="mt-3">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="fw-500 fs-sm">Resolution</label>
+                    {{ issue_resolution_form.resolution }}
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Save Resolution</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Comments Tab -->
+    <div class="tab-panel" id="tab-comments">
+        <div class="detail-section">
+            {% if issue.comments.all %}
+            {% for comment in issue.comments.all %}
+            <div class="comment-item">
+                <div class="comment-avatar">{{ comment.author.get_initials }}</div>
+                <div class="comment-body">
+                    <div class="comment-header">
+                        <span class="comment-author">{{ comment.author.get_full_name|default:comment.author.username }}</span>
+                        <span class="comment-time">{{ comment.created_at|date:"M d, Y g:i A" }}</span>
+                        {% if comment.edited_at %}
+                        <span class="comment-edited">(edited)</span>
+                        {% endif %}
+                    </div>
+                    <div class="comment-text">{{ comment.body|linebreaks }}</div>
+                    {% if comment.author == user or issue.project.user_can_edit %}
+                    <div class="comment-actions">
+                        {% if comment.author == user %}
+                        <a href="{% url 'issues:comment_edit' issue.pk comment.pk %}" class="btn-ghost btn-sm fs-xs">
+                            <span class="material-icons icon-sm">edit</span> Edit
+                        </a>
+                        {% endif %}
+                        {% if comment.author == user or issue.project.user_can_edit %}
+                        <a href="{% url 'issues:comment_delete' issue.pk comment.pk %}" class="btn-ghost btn-sm fs-xs text-error">
+                            <span class="material-icons icon-sm">delete</span> Delete
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="text-tertiary fst-italic">No comments yet.</p>
+            {% endif %}
+
+            <form method="post" action="{% url 'issues:comment' issue.pk %}" class="comment-form-inline">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ comment_form.body.label_tag }}
+                    {{ comment_form.body }}
+                    {% if comment_form.body.errors %}<span class="form-error">{{ comment_form.body.errors }}</span>{% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Add Comment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Activity Tab -->
+    <div class="tab-panel" id="tab-activity">
+        <div class="detail-section">
+            <div class="activity-feed" id="issue-activity-feed">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p class="mt-2 text-muted">Loading activity...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+            btn.classList.add('active');
+            var tabId = 'tab-' + btn.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+
+            if (btn.getAttribute('data-tab') === 'activity') {
+                loadActivity();
+            }
+        });
+    });
+
+    var hash = window.location.hash;
+    if (hash) {
+        var tabBtn = document.querySelector('.tab-btn[data-tab="' + hash.replace('#tab-', '') + '"]');
+        if (tabBtn) tabBtn.click();
+    }
+
+    function loadActivity() {
+        var feed = document.getElementById('issue-activity-feed');
+        fetch('/activity/object/Issue/{{ issue.pk }}/')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.activities.length === 0) {
+                    feed.innerHTML = '<p class="text-tertiary fst-italic">No activity recorded yet.</p>';
+                    return;
+                }
+                var html = '';
+                data.activities.forEach(function(a) {
+                    html += '<div class="activity-item">' +
+                        '<div class="activity-avatar">' + a.user_initials + '</div>' +
+                        '<div class="activity-content">' +
+                        '<div class="activity-message"><strong>' + a.user + '</strong> ' + a.message + '</div>' +
+                        '<div class="activity-time">' + new Date(a.created_at).toLocaleString() + '</div>' +
+                        '</div></div>';
+                });
+                feed.innerHTML = html;
+            });
+    }
+});
+</script>
+{% endblock %}
