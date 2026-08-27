@@ -95,6 +95,26 @@ python manage.py runserver
 
 Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) to access the app.
 
+## Screenshots
+
+### Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+### Projects
+![Projects](screenshots/projects.png)
+
+### Tasks Kanban
+![Tasks Kanban](screenshots/tasks_kanban.png)
+
+### Issues Kanban
+![Issues Kanban](screenshots/issues_kanban.png)
+
+### Sprints
+![Sprints](screenshots/sprints.png)
+
+### Calendar
+![Calendar](screenshots/calender.png)
+
 ## License
 
 This project is for internal use.
