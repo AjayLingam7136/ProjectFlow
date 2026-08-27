@@ -58,3 +58,6 @@ coverage.xml
 
 # CommandCode
 .commandcode/
+
+#kilo
+.kilo/
