@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var idField = boardType === 'issues' ? 'issue_id' : 'task_id';
 
     var draggedCard = null;
+    var originalParent = null;
+    var originalNextSibling = null;
 
     document.querySelectorAll('.kanban-card').forEach(function(card) {
         card.addEventListener('dragstart', handleDragStart);
@@ -24,9 +26,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function handleDragStart(e) {
         draggedCard = this;
+        originalParent = this.parentElement;
+        originalNextSibling = this.nextElementSibling;
         this.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', this.getAttribute('data-task-id'));
+        e.dataTransfer.setData('text/plain', this.getAttribute('data-item-id') || this.getAttribute('data-task-id'));
     }
 
     function handleDragEnd(e) {
@@ -66,12 +70,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var itemId = e.dataTransfer.getData('text/plain');
         var newStatus = this.getAttribute('data-status');
+        var movedCard = draggedCard;
+        var previousStatus = movedCard ? movedCard.getAttribute('data-status') : newStatus;
 
         var cards = Array.from(this.querySelectorAll('.kanban-card'));
-        var order = cards.indexOf(draggedCard);
+        var order = cards.indexOf(movedCard);
 
-        if (draggedCard) {
-            draggedCard.setAttribute('data-status', newStatus);
+        if (movedCard) {
+            movedCard.setAttribute('data-status', newStatus);
         }
 
         updateColumnCounts();
@@ -82,6 +88,8 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         payload[idField] = parseInt(itemId);
 
+        if (movedCard) movedCard.classList.add('is-saving');
+
         fetch(moveUrl, {
             method: 'POST',
             headers: {
@@ -90,14 +98,27 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify(payload),
         })
-        .then(function(r) { return r.json(); })
+        .then(function(r) {
+            return r.json().then(function(data) {
+                if (!r.ok) throw new Error(data.error || 'Could not save move');
+                return data;
+            });
+        })
         .then(function(data) {
             if (!data.success) {
-                console.error('Failed to move item:', data.error);
+                throw new Error(data.error || 'Could not save move');
             }
         })
         .catch(function(err) {
             console.error('Network error:', err);
+            if (movedCard && originalParent) {
+                movedCard.setAttribute('data-status', previousStatus);
+                originalParent.insertBefore(movedCard, originalNextSibling);
+                updateColumnCounts();
+            }
+        })
+        .finally(function() {
+            if (movedCard) movedCard.classList.remove('is-saving');
         });
     }
 

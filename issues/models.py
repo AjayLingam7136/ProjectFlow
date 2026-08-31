@@ -43,6 +43,13 @@ class Issue(models.Model):
         blank=True,
         null=True,
     )
+    assigned_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name='assigned_issues_by',
+        blank=True,
+        null=True,
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

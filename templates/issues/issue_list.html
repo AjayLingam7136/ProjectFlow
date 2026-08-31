@@ -28,7 +28,7 @@
         </div>
         <div class="kanban-column-body" data-status="{{ status }}">
             {% for issue in issues %}
-            <div class="kanban-card" draggable="true" data-task-id="{{ issue.pk }}" data-status="{{ issue.status }}">
+            <div class="kanban-card" draggable="true" data-item-id="{{ issue.pk }}" data-status="{{ issue.status }}">
                 <div class="kanban-card-header">
                     <a href="{% url 'issues:detail' issue.pk %}" class="kanban-card-title">{{ issue.title }}</a>
                 </div>
@@ -51,6 +51,7 @@
                 {% endif %}
                 <div class="kanban-card-footer">
                     <div class="kanban-card-project">{{ issue.project.name }}</div>
+                    {% if issue.assignee %}<span class="kanban-card-assigned-by" title="Assigned by">by {{ issue.assigned_by.get_short_name|default:issue.assigned_by.username|default:'—' }}</span>{% endif %}
                     {% if issue.assignee %}
                     <div class="kanban-card-assignee">
                         <div class="team-avatar-placeholder" style="width:24px;height:24px;font-size:0.5rem;">{{ issue.assignee.get_initials }}</div>

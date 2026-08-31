@@ -28,6 +28,10 @@ urlpatterns = [
     path('issues/', include('issues.urls', namespace='issues')),
 ]
 
+admin.site.site_header = 'ProjectFlow administration'
+admin.site.site_title = 'ProjectFlow admin'
+admin.site.index_title = 'Administration'
+
 # Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

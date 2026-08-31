@@ -37,7 +37,7 @@ class IssueListView(LoginRequiredMixin, TemplateView):
         project_id = self.request.GET.get('project')
         issues_qs = Issue.objects.filter(
             Q(project__owner=user) | Q(project__team_members=user) | Q(project__memberships__user=user) | Q(assignee=user)
-        ).select_related('project', 'assignee').prefetch_related('tags').distinct()
+        ).select_related('project', 'assignee', 'assigned_by').prefetch_related('tags').distinct()
 
         if project_id:
             issues_qs = issues_qs.filter(project_id=project_id)
@@ -66,7 +66,7 @@ class IssueDetailView(LoginRequiredMixin, DetailView):
         user = self.request.user
         return Issue.objects.filter(
             Q(project__owner=user) | Q(project__team_members=user) | Q(project__memberships__user=user) | Q(assignee=user)
-        ).distinct()
+        ).select_related('assignee', 'assigned_by').distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -89,6 +89,8 @@ class IssueCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
+        if form.instance.assignee_id:
+            form.instance.assigned_by = self.request.user
         response = super().form_valid(form)
         log_activity(self.request.user, 'create_issue', f'Created issue "{self.object.title}"', self.object)
         if self.object.assignee and self.object.assignee != self.request.user:
@@ -121,8 +123,12 @@ class IssueUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         )
 
     def form_valid(self, form):
+        old_assignee_id = self.get_object().assignee_id
         old_status = self.get_object().status
         response = super().form_valid(form)
+        if old_assignee_id != self.object.assignee_id:
+            self.object.assigned_by = self.request.user if self.object.assignee_id else None
+            self.object.save(update_fields=['assigned_by', 'updated_at'])
         log_activity(self.request.user, 'update_issue', f'Updated issue "{self.object.title}"', self.object)
         if old_status != self.object.status:
             log_activity(self.request.user, 'change_issue_status', f'Changed issue "{self.object.title}" status to {self.object.get_status_display()}', self.object)
@@ -261,7 +267,7 @@ class IssueAPIView(LoginRequiredMixin, View):
             qs = qs.filter(project_id=project_id)
 
         issues = []
-        for issue in qs.select_related('project', 'assignee').prefetch_related('tags').order_by('order', '-created_at'):
+        for issue in qs.select_related('project', 'assignee', 'assigned_by').prefetch_related('tags').order_by('order', '-created_at'):
             issues.append({
                 'id': issue.pk,
                 'title': issue.title,
@@ -274,6 +280,10 @@ class IssueAPIView(LoginRequiredMixin, View):
                     'name': issue.assignee.get_full_name() or issue.assignee.username,
                     'initials': issue.assignee.get_initials,
                 } if issue.assignee else None,
+                'assigned_by': {
+                    'id': issue.assigned_by.pk,
+                    'name': issue.assigned_by.get_full_name() or issue.assigned_by.username,
+                } if issue.assigned_by else None,
                 'project': {
                     'id': issue.project.pk,
                     'name': issue.project.name,
@@ -306,8 +316,11 @@ class IssueKanbanMoveView(LoginRequiredMixin, View):
         issue = Issue.objects.filter(
             pk=issue_id,
         ).filter(
-            Q(project__owner=user) | Q(project__team_members=user) | Q(assignee=user)
-        ).first()
+            Q(project__owner=user)
+            | Q(project__team_members=user)
+            | Q(project__memberships__user=user)
+            | Q(assignee=user)
+        ).distinct().first()
 
         if not issue:
             return JsonResponse({'success': False, 'error': 'Issue not found'}, status=404)
@@ -342,7 +355,10 @@ class IssueBulkStatusUpdateView(LoginRequiredMixin, View):
         issues = Issue.objects.filter(
             pk__in=issue_ids,
         ).filter(
-            Q(project__owner=user) | Q(project__team_members=user) | Q(assignee=user)
+            Q(project__owner=user)
+            | Q(project__team_members=user)
+            | Q(project__memberships__user=user)
+            | Q(assignee=user)
         ).distinct()
 
         updated = issues.update(status=new_status)

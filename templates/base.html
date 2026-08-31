@@ -18,7 +18,7 @@
     <link rel="icon" href="{% static 'favicon.ico' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     {% block extra_css %}{% endblock %}
@@ -31,16 +31,16 @@
             <div class="sidebar-header">
                 <a href="{% url 'core:dashboard' %}" class="sidebar-logo">
                     <div class="sidebar-logo-icon">P</div>
-                    Project<span class="sidebar-logo-accent">Flow</span>
+                    <span>Project<span class="sidebar-logo-accent">Flow</span></span>
                 </a>
             </div>
             <nav class="sidebar-nav">
-                <div class="sidebar-nav-label">Main</div>
+                <div class="sidebar-nav-label">Command center</div>
                 <a href="{% url 'core:dashboard' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                     <span class="material-icons nav-icon">dashboard</span>
                     Dashboard
                 </a>
-                <div class="sidebar-nav-label">Workspace</div>
+                <div class="sidebar-nav-label">Your workspace</div>
                 <a href="{% url 'projects:list' %}" class="sidebar-nav-link {% if request.resolver_match.namespace == 'projects' %}active{% endif %}">
                     <span class="material-icons nav-icon">folder</span>
                     Projects
@@ -57,7 +57,7 @@
                     <span class="material-icons nav-icon">sprint</span>
                     Sprints
                 </a>
-                <div class="sidebar-nav-label">Insights</div>
+                <div class="sidebar-nav-label">Signals</div>
                 <a href="{% url 'calendar_view:month' %}" class="sidebar-nav-link {% if request.resolver_match.namespace == 'calendar_view' %}active{% endif %}">
                     <span class="material-icons nav-icon">calendar_month</span>
                     Calendar
@@ -68,6 +68,7 @@
                 </a>
             </nav>
             <div class="sidebar-footer">
+                <div class="sidebar-status"><span></span> Workspace online</div>
                 <a href="{% url 'accounts:logout' %}" class="sidebar-nav-link">
                     <span class="material-icons nav-icon">logout</span>
                     Logout

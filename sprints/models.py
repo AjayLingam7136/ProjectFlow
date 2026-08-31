@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+from tasks.models import Task
+
 
 class Sprint(models.Model):
     """Time-boxed iteration for planning work on a project."""
@@ -71,7 +73,7 @@ class Sprint(models.Model):
 
     def tasks_by_status(self):
         """Return tasks grouped by status."""
-        status_order = ['todo', 'in_progress', 'in_review', 'completed', 'blocked']
+        status_order = [status for status, _ in Task.STATUS_CHOICES]
         result = {}
         for status in status_order:
             result[status] = self.sprint_tasks.select_related(

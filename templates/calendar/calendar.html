@@ -5,10 +5,35 @@
 
 {% block topbar_actions %}
 <a href="?year={{ today.year }}&month={{ today.month }}" class="btn btn-outline btn-sm">Today</a>
+<a href="{% url 'tasks:create' %}" class="btn btn-primary btn-sm"><span class="material-icons icon-sm">add</span> New task</a>
 {% endblock %}
 
 {% block content %}
 <div class="calendar-page">
+    <div class="calendar-intro">
+        <div>
+            <div class="eyebrow"><span class="eyebrow-dot"></span> Delivery map</div>
+            <h2 class="calendar-title">Plan the <em>next move.</em></h2>
+            <p class="calendar-subtitle">Everything with a date, surfaced in one calm view.</p>
+        </div>
+        <div class="calendar-stats">
+            <div><strong>{{ calendar_stats.total }}</strong><span>scheduled</span></div>
+            <div><strong>{{ calendar_stats.overdue }}</strong><span>overdue</span></div>
+        </div>
+    </div>
+
+    <div class="calendar-toolbar">
+        <div class="calendar-filters" role="group" aria-label="Filter calendar events">
+            <button class="calendar-filter active" data-filter="all">All <b>{{ calendar_stats.total }}</b></button>
+            <button class="calendar-filter" data-filter="task">Tasks <b>{{ calendar_stats.tasks }}</b></button>
+            <button class="calendar-filter" data-filter="issue">Issues <b>{{ calendar_stats.issues }}</b></button>
+            <button class="calendar-filter" data-filter="project">Milestones <b>{{ calendar_stats.projects }}</b></button>
+        </div>
+        <span class="calendar-hint"><span class="material-icons icon-sm">info</span> Select an event for details</span>
+    </div>
+
+    <div class="calendar-layout">
+        <section>
     <!-- Calendar Navigation -->
     <div class="calendar-header">
         <a href="?year={{ prev_year }}&month={{ prev_month }}" class="btn btn-ghost btn-sm">
@@ -36,7 +61,7 @@
             <div class="calendar-day{% if day == today.day and month == today.month and year == today.year %} today{% endif %}{% if day == 0 %} other-month{% endif %}">
                 {% if day != 0 %}
                 <div class="calendar-day-number">{{ day }}</div>
-                <div class="calendar-day-events" data-day="{{ day }}"></div>
+            <div class="calendar-day-events" data-day="{{ day }}"></div>
                 {% endif %}
             </div>
             {% endfor %}
@@ -50,6 +75,35 @@
         <span class="legend-item"><span class="legend-dot" style="background-color: var(--color-secondary);"></span> Project</span>
         <span class="legend-item"><span class="legend-dot" style="background-color: var(--color-warning);"></span> Issue</span>
         <span class="legend-item"><span class="legend-dot" style="background-color: var(--color-error);"></span> Overdue</span>
+    </div>
+        </section>
+
+        <aside class="calendar-agenda">
+            <div class="agenda-heading"><div><span class="eyebrow">UP NEXT</span><h3>Upcoming</h3></div><span class="material-icons">north_east</span></div>
+            {% if upcoming_events %}
+            <div class="agenda-list">
+                {% for event in upcoming_events %}
+                <a class="agenda-item {{ event.type }}{% if event.is_overdue %} overdue{% endif %}" href="{{ event.url }}">
+                    <span class="agenda-date">{{ event.date_label }}</span>
+                    <strong>{{ event.title }}</strong>
+                    <small>{{ event.project }} <span>·</span> {{ event.meta }}</small>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="agenda-empty"><span class="material-icons">event_available</span><p>No dates on the board yet.</p><a href="{% url 'tasks:create' %}" class="btn btn-outline btn-sm">Schedule a task</a></div>
+            {% endif %}
+        </aside>
+    </div>
+</div>
+
+<div class="calendar-modal" id="calendar-modal" aria-hidden="true">
+    <div class="calendar-modal-card">
+        <button class="calendar-modal-close" type="button" aria-label="Close"><span class="material-icons">close</span></button>
+        <span class="calendar-modal-type" id="modal-type">TASK</span>
+        <h3 id="modal-title"></h3>
+        <p id="modal-meta"></p>
+        <a id="modal-link" class="btn btn-primary btn-sm" href="#">Open item <span class="material-icons icon-sm">arrow_outward</span></a>
     </div>
 </div>
 
@@ -70,11 +124,42 @@ document.addEventListener('DOMContentLoaded', function() {
             var eventEl = document.createElement('a');
             eventEl.href = evt.url;
             eventEl.className = 'calendar-event ' + evt.type + (evt.is_overdue ? ' overdue' : '');
+            eventEl.dataset.type = evt.type;
+            eventEl.dataset.title = evt.title;
+            eventEl.dataset.meta = evt.meta || '';
+            eventEl.dataset.project = evt.project || '';
+            eventEl.dataset.url = evt.url;
             eventEl.textContent = evt.title;
             eventEl.title = evt.title;
+            eventEl.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('modal-type').textContent = evt.type.toUpperCase() + (evt.is_overdue ? ' / OVERDUE' : '');
+                document.getElementById('modal-title').textContent = evt.title;
+                document.getElementById('modal-meta').textContent = (evt.project || '') + ' · ' + (evt.meta || evt.date_label || '');
+                document.getElementById('modal-link').href = evt.url;
+                document.getElementById('calendar-modal').classList.add('show');
+                document.getElementById('calendar-modal').setAttribute('aria-hidden', 'false');
+            });
             container.appendChild(eventEl);
         });
     });
+
+    document.querySelectorAll('.calendar-filter').forEach(function(filter) {
+        filter.addEventListener('click', function() {
+            document.querySelectorAll('.calendar-filter').forEach(function(item) { item.classList.remove('active'); });
+            filter.classList.add('active');
+            var selected = filter.dataset.filter;
+            document.querySelectorAll('.calendar-event, .agenda-item').forEach(function(item) {
+                item.hidden = selected !== 'all' && item.classList.contains(selected) === false;
+            });
+        });
+    });
+
+    var modal = document.getElementById('calendar-modal');
+    function closeCalendarModal() { modal.classList.remove('show'); modal.setAttribute('aria-hidden', 'true'); }
+    document.querySelector('.calendar-modal-close').addEventListener('click', closeCalendarModal);
+    modal.addEventListener('click', function(e) { if (e.target === modal) closeCalendarModal(); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeCalendarModal(); });
 });
 </script>
 {% endblock %}

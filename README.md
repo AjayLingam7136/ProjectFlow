@@ -5,19 +5,20 @@ A project management application built with Django 6.1. Manage projects, tasks, 
 ## Features
 
 - **Projects** - Create and manage projects with team members, roles, and status tracking
-- **Tasks** - Kanban board for task management with drag-and-drop, priorities, and tags
-- **Issues** - Bug/issue tracking with severity, steps to reproduce, and resolution fields
-- **Sprints** - Sprint planning and progress tracking
-- **Calendar** - Calendar view for task scheduling
+- **Tasks** - Kanban board for task management with drag-and-drop, priorities, tags, assignees, and assignment tracking
+- **Issues** - Bug/issue tracking with Kanban drag-and-drop, severity, steps to reproduce, resolution fields, assignees, and assignment tracking
+- **Sprints** - Sprint planning, progress tracking, and task status columns
+- **Calendar** - Monthly calendar with task, issue, and project milestone events, filters, upcoming agenda, and event details
 - **Activity Feed** - Track all project activity across users
 - **Notifications** - Real-time notification system
 - **Theming** - Dark, light, and system theme support
+- **Administration** - Django admin panel with email-first user creation
 
 ## Tech Stack
 
 - **Backend:** Django 6.1, Python
 - **Database:** SQLite
-- **Frontend:** Vanilla JS, Material Icons, Inter font
+- **Frontend:** Vanilla JS, Material Icons, DM Sans, Space Grotesk, and DM Mono
 - **Auth:** Custom user model with email-based login
 
 ## Project Structure
@@ -34,7 +35,7 @@ ProjectManagement/
 ├── calendar_view/      # Calendar interface
 ├── activity/           # Activity logging and feed
 ├── notifications/      # Notification system
-├── templates/          # Global templates
+├── templates/          # Global and admin templates
 ├── static/             # CSS, JS, images
 ├── manage.py
 └── seed_data.py        # Sample data for development
@@ -114,6 +115,12 @@ Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) to access the app.
 
 ### Calendar
 ![Calendar](screenshots/calender.png)
+
+### Activity
+![Activity](screenshots/activity.png)
+
+### Sprint Detail
+![Sprint Detail](screenshots/sprints_detail.png)
 
 ## License
 

@@ -35,18 +35,28 @@ class TaskListView(LoginRequiredMixin, TemplateView):
         project_id = self.request.GET.get('project')
         tasks_qs = Task.objects.filter(
             Q(project__owner=user) | Q(project__team_members=user) | Q(project__memberships__user=user) | Q(assignee=user)
-        ).select_related('project', 'assignee').prefetch_related('tags').distinct()
+        ).select_related('project', 'assignee', 'assigned_by').prefetch_related('tags').distinct()
 
         if project_id:
             tasks_qs = tasks_qs.filter(project_id=project_id)
             context['selected_project'] = int(project_id)
 
         context['projects'] = projects
+        status_colors = {
+            'todo': '#7b8da4',
+            'in_progress': '#1083e0',
+            'in_review': '#8b5cf6',
+            'completed': '#7dcd30',
+            'blocked': '#ef4444',
+        }
         context['columns'] = [
-            ('todo', 'To Do', tasks_qs.filter(status='todo').order_by('order', '-created_at')),
-            ('in_progress', 'In Progress', tasks_qs.filter(status='in_progress').order_by('order', '-created_at')),
-            ('in_review', 'In Review', tasks_qs.filter(status='in_review').order_by('order', '-created_at')),
-            ('completed', 'Done', tasks_qs.filter(status='completed').order_by('order', '-created_at')),
+            (
+                status,
+                label,
+                status_colors[status],
+                tasks_qs.filter(status=status).order_by('order', '-created_at'),
+            )
+            for status, label in Task.STATUS_CHOICES
         ]
         context['filter_form'] = TaskFilterForm(self.request.GET)
         context['board_type'] = 'tasks'
@@ -62,7 +72,7 @@ class TaskDetailView(LoginRequiredMixin, DetailView):
         user = self.request.user
         return Task.objects.filter(
             Q(project__owner=user) | Q(project__team_members=user) | Q(project__memberships__user=user) | Q(assignee=user)
-        ).distinct()
+        ).select_related('assignee', 'assigned_by').distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -84,6 +94,8 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
+        if form.instance.assignee_id:
+            form.instance.assigned_by = self.request.user
         response = super().form_valid(form)
         log_activity(self.request.user, 'create_task', f'Created task "{self.object.title}"', self.object)
         if self.object.assignee and self.object.assignee != self.request.user:
@@ -116,8 +128,12 @@ class TaskUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         )
 
     def form_valid(self, form):
+        old_assignee_id = self.get_object().assignee_id
         old_status = self.get_object().status
         response = super().form_valid(form)
+        if old_assignee_id != self.object.assignee_id:
+            self.object.assigned_by = self.request.user if self.object.assignee_id else None
+            self.object.save(update_fields=['assigned_by', 'updated_at'])
         log_activity(self.request.user, 'update_task', f'Updated task "{self.object.title}"', self.object)
         if old_status != self.object.status:
             log_activity(self.request.user, 'change_status', f'Changed task "{self.object.title}" status to {self.object.get_status_display()}', self.object)
@@ -303,7 +319,7 @@ class TaskAPIView(LoginRequiredMixin, View):
             qs = qs.filter(assignee_id=assignee_filter)
 
         tasks = []
-        for task in qs.select_related('project', 'assignee').prefetch_related('tags').order_by('order', '-created_at'):
+        for task in qs.select_related('project', 'assignee', 'assigned_by').prefetch_related('tags').order_by('order', '-created_at'):
             tasks.append({
                 'id': task.pk,
                 'title': task.title,
@@ -315,6 +331,10 @@ class TaskAPIView(LoginRequiredMixin, View):
                     'name': task.assignee.get_full_name() or task.assignee.username,
                     'initials': task.assignee.get_initials,
                 } if task.assignee else None,
+                'assigned_by': {
+                    'id': task.assigned_by.pk,
+                    'name': task.assigned_by.get_full_name() or task.assigned_by.username,
+                } if task.assigned_by else None,
                 'project': {
                     'id': task.project.pk,
                     'name': task.project.name,

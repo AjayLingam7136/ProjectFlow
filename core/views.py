@@ -27,6 +27,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         user = self.request.user
         today = timezone.now().date()
         next_week = today + timedelta(days=7)
+        context['today'] = today
 
         # Projects the user owns or is a team member of
         user_projects = Project.objects.filter(

@@ -51,6 +51,12 @@
             <span class="text-tertiary">Unassigned</span>
             {% endif %}
         </div>
+        {% if task.assignee %}
+        <div class="task-assigned-by" title="Person who assigned this task">
+            <span class="material-icons icon-sm">north_east</span>
+            {% if task.assigned_by %}{{ task.assigned_by.get_short_name|default:task.assigned_by.username }}{% else %}Not recorded{% endif %}
+        </div>
+        {% endif %}
         <div class="task-card-due {% if task.is_overdue %}overdue{% endif %}">
             {% if task.due_date %}
             <span class="material-icons icon-sm">event</span>

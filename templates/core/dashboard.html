@@ -10,6 +10,15 @@
 
 {% block content %}
 <div class="dashboard">
+    <section class="dashboard-intro">
+        <div>
+            <div class="eyebrow"><span class="eyebrow-dot"></span> {{ today|date:"l" }}, your workspace is live</div>
+            <h2 class="dashboard-welcome">Make room for <em>meaningful</em> progress.</h2>
+            <p class="dashboard-lede">A clear view of the work moving your team forward, all in one place.</p>
+        </div>
+        <div class="intro-mark" aria-hidden="true"><span>PF</span><small>EST. 2024</small></div>
+    </section>
+
     <!-- Summary Cards -->
     <div class="summary-grid">
         <div class="summary-card">
@@ -17,42 +26,42 @@
                 <span class="material-icons">folder</span>
             </div>
             <div class="summary-value">{{ total_projects }}</div>
-            <div class="summary-label">Total Projects</div>
+            <div class="summary-label">Total projects <span>01</span></div>
         </div>
         <div class="summary-card">
             <div class="summary-icon summary-icon-success">
                 <span class="material-icons">folder_open</span>
             </div>
             <div class="summary-value">{{ active_projects }}</div>
-            <div class="summary-label">Active Projects</div>
+            <div class="summary-label">Active projects <span>02</span></div>
         </div>
         <div class="summary-card">
             <div class="summary-icon summary-icon-warning">
                 <span class="material-icons">pending_actions</span>
             </div>
             <div class="summary-value">{{ active_tasks }}</div>
-            <div class="summary-label">Active Tasks</div>
+            <div class="summary-label">Active tasks <span>03</span></div>
         </div>
         <div class="summary-card">
             <div class="summary-icon summary-icon-error">
                 <span class="material-icons">warning</span>
             </div>
             <div class="summary-value">{{ overdue_tasks }}</div>
-            <div class="summary-label">Overdue Tasks</div>
+            <div class="summary-label">Overdue tasks <span>04</span></div>
         </div>
         <div class="summary-card">
             <div class="summary-icon summary-icon-primary">
                 <span class="material-icons">bug_report</span>
             </div>
             <div class="summary-value">{{ active_issues }}</div>
-            <div class="summary-label">Open Issues</div>
+            <div class="summary-label">Open issues <span>05</span></div>
         </div>
         <div class="summary-card">
             <div class="summary-icon summary-icon-error">
                 <span class="material-icons">report_problem</span>
             </div>
             <div class="summary-value">{{ overdue_issues }}</div>
-            <div class="summary-label">Overdue Issues</div>
+            <div class="summary-label">Overdue issues <span>06</span></div>
         </div>
     </div>
 
@@ -145,6 +154,7 @@
     <!-- Recent Activity -->
     <div class="section-header mt-4">
         <h2 class="section-title">Recent Activity</h2>
+        <a href="{% url 'activity:list' %}" class="btn btn-ghost btn-sm">View all</a>
     </div>
 
     {% if recent_activities %}

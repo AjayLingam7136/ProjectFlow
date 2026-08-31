@@ -58,21 +58,22 @@ class SprintDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         sprint = self.object
 
-        STATUS_COLUMNS = [
-            ('todo', 'To Do', '#7b8da4'),
-            ('in_progress', 'In Progress', '#1083e0'),
-            ('in_review', 'In Review', '#8b5cf6'),
-            ('completed', 'Completed', '#7dcd30'),
-            ('blocked', 'Blocked', '#ef4444'),
-        ]
+        status_colors = {
+            'todo': '#7b8da4',
+            'in_progress': '#1083e0',
+            'in_review': '#8b5cf6',
+            'completed': '#7dcd30',
+            'blocked': '#ef4444',
+        }
 
         sprint_tasks = sprint.sprint_tasks.select_related(
-            'task', 'task__assignee', 'task__project'
+            'task', 'task__assignee', 'task__assigned_by', 'task__project'
         ).order_by('task__status', 'task__priority', 'task__title')
 
         # Build list of (status_code, label, color, tasks_list)
         columns_with_tasks = []
-        for status_code, status_label, color in STATUS_COLUMNS:
+        for status_code, status_label in Task.STATUS_CHOICES:
+            color = status_colors[status_code]
             col_tasks = [st for st in sprint_tasks if st.task.status == status_code]
             columns_with_tasks.append((status_code, status_label, color, col_tasks))
 

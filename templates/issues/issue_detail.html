@@ -57,6 +57,12 @@
                     </div>
                 </div>
                 <div>
+                    <div class="fs-xs text-secondary mb-1">Assigned By</div>
+                    <div class="fw-500 fs-sm">
+                        {% if issue.assigned_by %}{{ issue.assigned_by.get_full_name|default:issue.assigned_by.username }}{% else %}<span class="text-tertiary">Not recorded</span>{% endif %}
+                    </div>
+                </div>
+                <div>
                     <div class="fs-xs text-secondary mb-1">Due Date</div>
                     <div class="fw-500 fs-sm {% if issue.is_overdue %}text-error{% endif %}">
                         {% if issue.due_date %}{{ issue.due_date|date:"M d, Y" }}{% else %}<span class="text-tertiary">Not set</span>{% endif %}

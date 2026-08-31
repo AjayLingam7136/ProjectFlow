@@ -84,6 +84,10 @@ class CalendarView(LoginRequiredMixin, TemplateView):
                 'priority': task.priority,
                 'url': f'/tasks/{task.pk}/',
                 'is_overdue': task.is_overdue,
+                'date': task.due_date.isoformat(),
+                'date_label': f"{task.due_date.strftime('%a, %b')} {task.due_date.day}",
+                'project': task.project.name,
+                'meta': f'{task.get_status_display()} · {task.get_priority_display()} priority',
             })
 
         for issue in issues:
@@ -99,6 +103,10 @@ class CalendarView(LoginRequiredMixin, TemplateView):
                 'severity': issue.severity,
                 'url': f'/issues/{issue.pk}/',
                 'is_overdue': issue.is_overdue,
+                'date': issue.due_date.isoformat(),
+                'date_label': f"{issue.due_date.strftime('%a, %b')} {issue.due_date.day}",
+                'project': issue.project.name,
+                'meta': f'{issue.get_status_display()} · {issue.get_severity_display()} severity',
             })
 
         for project in projects:
@@ -111,9 +119,22 @@ class CalendarView(LoginRequiredMixin, TemplateView):
                 'title': project.name,
                 'status': project.status,
                 'url': f'/projects/{project.pk}/',
+                'date': project.due_date.isoformat(),
+                'date_label': f"{project.due_date.strftime('%a, %b')} {project.due_date.day}",
+                'project': 'Project milestone',
+                'meta': project.get_status_display(),
             })
 
         context['events'] = events
+        all_events = [event for day_events in events.values() for event in day_events]
+        context['upcoming_events'] = sorted(all_events, key=lambda event: event['date'])[:8]
+        context['calendar_stats'] = {
+            'total': len(all_events),
+            'tasks': sum(event['type'] == 'task' for event in all_events),
+            'issues': sum(event['type'] == 'issue' for event in all_events),
+            'projects': sum(event['type'] == 'project' for event in all_events),
+            'overdue': sum(event.get('is_overdue', False) for event in all_events),
+        }
         return context
 
 

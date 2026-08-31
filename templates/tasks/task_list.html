@@ -17,11 +17,11 @@
 
 {% block content %}
 <div class="kanban-board" id="kanban-board" data-board-type="tasks">
-    {% for status, label, tasks in columns %}
+    {% for status, label, color, tasks in columns %}
     <div class="kanban-column" data-status="{{ status }}">
         <div class="kanban-column-header">
             <div class="kanban-column-title">
-                <span class="kanban-column-dot" style="background-color: var(--color-{% if status == 'todo' %}todo{% elif status == 'in_progress' %}task-in-progress{% elif status == 'in_review' %}in-review{% elif status == 'completed' %}task-completed{% endif %});"></span>
+                <span class="kanban-column-dot" style="background-color: {{ color }};"></span>
                 {{ label }}
                 <span class="kanban-column-count">{{ tasks.count }}</span>
             </div>
@@ -50,6 +50,7 @@
                 {% endif %}
                 <div class="kanban-card-footer">
                     <div class="kanban-card-project">{{ task.project.name }}</div>
+                    {% if task.assignee %}<span class="kanban-card-assigned-by" title="Assigned by">by {{ task.assigned_by.get_short_name|default:task.assigned_by.username|default:'—' }}</span>{% endif %}
                     {% if task.assignee %}
                     <div class="kanban-card-assignee">
                         <div class="team-avatar-placeholder" style="width:24px;height:24px;font-size:0.5rem;">{{ task.assignee.get_initials }}</div>

@@ -64,6 +64,7 @@
                         {% else %}
                         <span class="sprint-task-assignee text-tertiary">Unassigned</span>
                         {% endif %}
+                        {% if st.task.assignee %}<span class="sprint-task-assigned-by">by {{ st.task.assigned_by.get_short_name|default:st.task.assigned_by.username|default:'—' }}</span>{% endif %}
                         <span class="badge badge-priority badge-priority-{{ st.task.priority }}">{{ st.task.get_priority_display }}</span>
                     </div>
                     {% if st.task.due_date %}

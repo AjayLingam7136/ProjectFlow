@@ -1,0 +1,16 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | ProjectFlow admin{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'admin/admin.css' %}">
+{% endblock %}
+
+{% block branding %}
+<a href="{% url 'admin:index' %}" class="projectflow-admin-brand">
+    <span class="projectflow-admin-mark">P</span>
+    <span>Project<span>Flow</span> <small>ADMIN</small></span>
+</a>
+{% endblock %}
