@@ -1,127 +1,114 @@
-# ProjectFlow
+# 🚀 ProjectFlow
 
-A project management application built with Django 6.1. Manage projects, tasks, issues, sprints, and team collaboration with a modern dark/light themed UI.
+> ✨ Team project management in Django: projects with roles, Kanban tasks and issues, sprints, calendar, activity feed, and notifications — with dark / light / system theming.
 
-## Features
+## 🌟 Features
 
-- **Projects** - Create and manage projects with team members, roles, and status tracking
-- **Tasks** - Kanban board for task management with drag-and-drop, priorities, tags, assignees, and assignment tracking
-- **Issues** - Bug/issue tracking with Kanban drag-and-drop, severity, steps to reproduce, resolution fields, assignees, and assignment tracking
-- **Sprints** - Sprint planning, progress tracking, and task status columns
-- **Calendar** - Monthly calendar with task, issue, and project milestone events, filters, upcoming agenda, and event details
-- **Activity Feed** - Track all project activity across users
-- **Notifications** - Real-time notification system
-- **Theming** - Dark, light, and system theme support
-- **Administration** - Django admin panel with email-first user creation
+- 📁 **Projects** — CRUD, status and priority tracking, team membership with roles (admin, manager, member, viewer), bookmarks
+- ✅ **Tasks** — Kanban with drag-and-drop, priorities, tags, assignees, comments, filters
+- 🐞 **Issues** — Kanban bug tracking with severity, reproduction steps, resolution, comments
+- 🏃 **Sprints** — planning, active-sprint tracking, task assignment
+- 📅 **Calendar** — month view of tasks, issues, and milestones, plus upcoming agenda
+- 🔔 **Activity & notifications** — per-object activity log, unread badge with polling
+- 🎨 **Theming** — dark, light, and system modes, persisted per user and in `localStorage`
+- 🔐 **Auth** — custom email-login user model, profile with avatar and bio, password reset via console email backend
+- 🛠️ **Admin** — customized Django admin
 
-## Tech Stack
+## 🧰 Tech stack
 
-- **Backend:** Django 6.1, Python
-- **Database:** SQLite
-- **Frontend:** Vanilla JS, Material Icons, DM Sans, Space Grotesk, and DM Mono
-- **Auth:** Custom user model with email-based login
+| Layer    | Choice                                                        |
+| -------- | ------------------------------------------------------------- |
+| ⚙️ Backend  | Django 6.1, Python 3.10+                                      |
+| 🗄️ Database | SQLite (dev)                                                  |
+| 🖥️ Frontend | Vanilla JS, server-rendered Django templates, custom CSS      |
+| 🔤 Fonts / icons | DM Sans, Space Grotesk, DM Mono; Material Icons / Symbols |
 
-## Project Structure
-
-```
-ProjectManagement/
-├── config/             # Django settings, URLs, WSGI
-├── core/               # Dashboard, shared utilities, context processors
-├── accounts/           # Custom user model, auth views
-├── projects/           # Project CRUD, memberships, roles
-├── tasks/              # Task management, Kanban boards, tags
-├── issues/             # Issue/bug tracking, comments, Kanban
-├── sprints/            # Sprint planning and tracking
-├── calendar_view/      # Calendar interface
-├── activity/           # Activity logging and feed
-├── notifications/      # Notification system
-├── templates/          # Global and admin templates
-├── static/             # CSS, JS, images
-├── manage.py
-└── seed_data.py        # Sample data for development
-```
-
-## Setup
-
-### Prerequisites
-
-- Python 3.10+
-
-### Installation
-
-1. Clone the repository:
+## ⚡ Quickstart
 
 ```bash
 git clone <repository-url>
 cd ProjectManagement
-```
 
-2. Create and activate a virtual environment:
-
-```bash
 python -m venv venv
-source venv/bin/activate   # Linux/macOS
-venv\Scripts\activate      # Windows
-```
+source venv/bin/activate        # Linux/macOS
+venv\Scripts\activate           # Windows
 
-3. Install dependencies:
-
-```bash
 pip install django
-```
-
-4. Run migrations:
-
-```bash
 python manage.py migrate
-```
-
-5. Create a superuser:
-
-```bash
 python manage.py createsuperuser
+python manage.py runserver
 ```
 
-6. (Optional) Load sample data:
+🌐 Open <http://127.0.0.1:8000/>.
+
+### 🌱 Demo data (optional)
 
 ```bash
 python manage.py shell < seed_data.py
 ```
 
-7. Run the development server:
+Seeds 3 users, 4 projects, 9 tasks, tags, and comments. Log in with:
 
-```bash
-python manage.py runserver
+| User    | Email               | Password |
+| ------- | ------------------- | -------- |
+| 👩 alice   | alice@example.com   | demo123  |
+| 👨 bob     | bob@example.com     | demo123  |
+| 🧑 charlie | charlie@example.com | demo123  |
+
+## 📂 Project structure
+
+```
+config/          # ⚙️ settings, root URLs, WSGI
+core/            # 🏠 dashboard, shared forms, context processors
+accounts/        # 👤 custom user model, auth, profile, theme endpoint
+projects/        # 📁 projects, memberships, roles, bookmarks
+tasks/           # ✅ tasks, tags, comments, Kanban
+issues/          # 🐞 issues, comments, Kanban
+sprints/         # 🏃 sprints and sprint tasks
+calendar_view/   # 📅 month calendar and agenda
+activity/        # 📜 activity log and feed
+notifications/   # 🔔 notifications and unread count API
+templates/       # 🧩 global + app templates (base.html owns the toast markup)
+static/css/main.css  # 🎨 design system, themes, toast styles
+static/js/main.js    # 🧠 theme toggle, dropdowns, modals, toast auto-dismiss
+seed_data.py     # 🌱 demo dataset
 ```
 
-Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) to access the app.
+## ⚙️ Configuration notes
 
-## Screenshots
+- 🔑 Login uses **email** (`USERNAME_FIELD = 'email'`); `username` is still required.
+- 🎨 Theme preference lives on the user (`dark` / `light` / `system`); the toggle posts to `/accounts/theme/` and mirrors to `localStorage` key `pf-theme`.
+- 💬 Toasts render from Django `messages` in `templates/base.html` (`.messages-container` / `.message-*` in `static/css/main.css`, auto-dismiss in `static/js/main.js`).
+- 📸 Media uploads go to `media/` (`MEDIA_URL = 'media/'`); static source is `static/`, collected to `staticfiles/`.
+- 📧 Email uses the console backend in development.
+- ⚠️ `DEBUG = True` with a dev `SECRET_KEY` — replace both before any deployment.
 
-### Dashboard
-![Dashboard](screenshots/dashboard.png)
+## 🧪 Tests
 
-### Projects
-![Projects](screenshots/projects.png)
+```bash
+python manage.py test
+```
 
-### Tasks Kanban
-![Tasks Kanban](screenshots/tasks_kanban.png)
+Covers accounts, projects (including roles), tasks, and activity.
 
-### Issues Kanban
-![Issues Kanban](screenshots/issues_kanban.png)
+## 📸 Screenshots
 
-### Sprints
-![Sprints](screenshots/sprints.png)
+| 🏠 Dashboard | 📁 Projects |
+| --------- | -------- |
+| ![Dashboard](screenshots/dashboard.png) | ![Projects](screenshots/projects.png) |
 
-### Calendar
-![Calendar](screenshots/calender.png)
+| ✅ Tasks Kanban | 🐞 Issues Kanban |
+| ------------ | ------------- |
+| ![Tasks Kanban](screenshots/tasks_kanban.png) | ![Issues Kanban](screenshots/issues_kanban.png) |
 
-### Activity
-![Activity](screenshots/activity.png)
+| 🏃 Sprints | 🏃 Sprint detail |
+| ------- | ------------- |
+| ![Sprints](screenshots/sprints.png) | ![Sprint Detail](screenshots/sprints_detail.png) |
 
-### Sprint Detail
-![Sprint Detail](screenshots/sprints_detail.png)
+| 📅 Calendar | 📜 Activity |
+| -------- | -------- |
+| ![Calendar](screenshots/calender.png) | ![Activity](screenshots/activity.png) |
 
-## License
+## 📄 License
 
-This project is for internal use.
+Released under the [MIT License](LICENSE) — free to use, modify, and distribute.

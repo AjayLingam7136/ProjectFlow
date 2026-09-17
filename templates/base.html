@@ -19,8 +19,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}?v=glass6">
+    <script>
+    (function() {
+        function markReady() { document.documentElement.classList.add('icons-ready'); }
+        if (document.fonts && document.fonts.load) {
+            document.fonts.load('400 24px "Material Symbols Rounded"').then(markReady).catch(markReady);
+        } else {
+            window.addEventListener('load', markReady);
+        }
+    })();
+    </script>
     {% block extra_css %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -117,16 +127,14 @@
 
     <!-- Messages -->
     {% if messages %}
-    <div class="messages-container">
+    <div class="toast-stack" aria-live="polite" aria-atomic="false">
         {% for message in messages %}
-            <div class="message message-{{ message.tags }}">
-                <span class="material-icons">
-                    {% if message.tags == 'success' %}check_circle
-                    {% elif message.tags == 'error' %}error
-                    {% elif message.tags == 'warning' %}warning
-                    {% else %}info{% endif %}
-                </span>
-                {{ message }}
+            <div class="toast toast-{{ message.tags }}" role="status">
+                <span class="toast-icon material-symbols-rounded" aria-hidden="true">{% if message.tags == 'success' %}check_circle{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}</span>
+                <span class="toast-text">{{ message }}</span>
+                <button type="button" class="toast-close" aria-label="Dismiss notification">
+                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                </button>
             </div>
         {% endfor %}
     </div>
@@ -144,7 +152,7 @@
     <div class="overlay" id="overlay"></div>
     {% endif %}
 
-    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/main.js' %}?v=glass6"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -139,15 +139,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Auto-dismiss messages after 5 seconds
-    const messages = document.querySelectorAll('.message');
+    // Auto-dismiss toasts/messages after 5 seconds
+    const messages = document.querySelectorAll('.message, .toast');
     messages.forEach(function(message) {
-        setTimeout(function() {
-            message.style.opacity = '0';
+        let dismissed = false;
+        function dismiss() {
+            if (dismissed) {
+                return;
+            }
+            dismissed = true;
+            message.classList.add('is-hiding');
             setTimeout(function() {
                 message.remove();
             }, 300);
-        }, 5000);
+        }
+        const closeBtn = message.querySelector('.message-close, .toast-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', dismiss);
+        }
+        setTimeout(dismiss, 5000);
     });
 
     // Progress bar animation
